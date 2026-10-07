@@ -12,3 +12,5 @@ frontend/dist/
 *.egg-info/
 tests/fixtures/local/
 tsconfig.tsbuildinfo
+web-demo/dist/
+web-demo/node_modules/
