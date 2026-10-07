@@ -1,0 +1,103 @@
+# Model registry (docs/03 §7). Loaded and SHA-256-verified at startup.
+# Model files are downloaded by `python tools/fetch_models.py` (gitignored).
+models:
+  - model_id: face_detector.yunet
+    model_type: FACE_DETECTOR
+    name: YuNet
+    version: "2023mar"
+    source: https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
+    download_url: https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx
+    license: MIT
+    license_status: APPROVED
+    file: face_detection_yunet_2023mar.onnx
+    sha256: 8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4
+    adapter: healthvision.engines.detection.yunet:YuNetDetector
+    deployment_format: onnx
+    runtime: opencv-dnn
+    input_size: [320, 320]
+    training_validation_date: "vendor: 2023-03; local validation: PENDING"
+    performance_metrics:
+      vendor_reported: {widerface_ap: "see OpenCV Zoo model card"}
+      local_validated: null
+    known_limitations:
+      - "Reduced recall on faces < 30 px and extreme profiles"
+      - "Not validated locally for skin-tone / lighting subgroups (PENDING)"
+
+  - model_id: landmarks.mediapipe_face_landmarker
+    model_type: LANDMARKS
+    name: MediaPipe Face Landmarker
+    version: "float16/1"
+    source: https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker
+    download_url: https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
+    license: Apache-2.0
+    license_status: APPROVED
+    file: face_landmarker.task
+    sha256: 64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff
+    adapter: healthvision.engines.landmarks.mediapipe_landmarker:MediaPipeLandmarker
+    deployment_format: task
+    runtime: mediapipe
+    input_size: [256, 256]
+    performance_metrics: {vendor_reported: {}, local_validated: null}
+    known_limitations:
+      - "Heavy occlusion degrades landmarks"
+      - "Landmarks are geometry only — never interpreted as health findings"
+
+  - model_id: expression.ferplus
+    model_type: EXPRESSION
+    name: FER+ (ONNX Model Zoo emotion-ferplus-8)
+    version: "onnx-opset8"
+    source: https://github.com/onnx/models/tree/main/validated/vision/body_analysis/emotion_ferplus
+    download_url: https://media.githubusercontent.com/media/onnx/models/main/validated/vision/body_analysis/emotion_ferplus/model/emotion-ferplus-8.onnx
+    license: MIT
+    license_status: APPROVED
+    file: emotion-ferplus-8.onnx
+    sha256: a2a2ba6a335a3b29c21acb6272f962bd3d47f84952aaffa03b60986e04efa61c
+    adapter: healthvision.engines.expression.ferplus_onnx:FerPlusExpressionEngine
+    deployment_format: onnx
+    runtime: onnxruntime
+    input_size: [64, 64, 1]
+    labels: [neutral, happiness, surprise, sadness, anger, disgust, fear, contempt]
+    performance_metrics:
+      vendor_reported: {fer_plus_test_accuracy: "see model card"}
+      local_validated: null
+    known_limitations:
+      - "Trained on low-resolution grayscale web images; posed expressions over-represented"
+      - "Disgust and fear classes have low support"
+      - "Not an emotion detector"
+
+  - model_id: embedding.sface
+    model_type: EMBEDDING
+    name: SFace
+    version: "2021dec"
+    source: https://github.com/opencv/opencv_zoo/tree/main/models/face_recognition_sface
+    download_url: https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx
+    license: Apache-2.0
+    license_status: APPROVED
+    file: face_recognition_sface_2021dec.onnx
+    sha256: 0ba9fbfa01b5270c96627c4ef784da859931e02f04419c829e83484087c34e79
+    adapter: healthvision.engines.recognition.sface:SFaceEmbedder
+    deployment_format: onnx
+    runtime: opencv-dnn
+    input_size: [112, 112, 3]
+    embedding_dim: 128
+    similarity: cosine
+    performance_metrics:
+      vendor_reported: {lfw_accuracy: "see model card"}
+      local_validated: null
+    known_limitations:
+      - "No liveness"
+      - "Accuracy below large ArcFace models"
+      - "Threshold must be calibrated locally"
+
+  - model_id: liveness.none
+    model_type: LIVENESS
+    name: Not implemented
+    version: "none"
+    license: n/a
+    license_status: APPROVED
+    file: null
+    sha256: null
+    adapter: healthvision.engines.liveness.not_implemented:NotImplementedLivenessEngine
+    status: NOT_IMPLEMENTED
+    performance_metrics: {vendor_reported: {}, local_validated: null}
+    known_limitations: ["Liveness detection is not implemented in this version."]

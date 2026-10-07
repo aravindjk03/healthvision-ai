@@ -1,0 +1,29 @@
+# BMI reference tables (docs/04 §5). Data, not code. Half-open intervals [lower, upper)
+# on the unrounded BMI value.
+references:
+  WHO_ADULT_2000:
+    version: "1"
+    citation: "WHO TRS 894, 2000"
+    full_citation: "WHO. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894, 2000."
+    categories:
+      - {code: UNDERWEIGHT, label: Underweight, lower: null, upper: 18.5}
+      - {code: NORMAL, label: Normal range, lower: 18.5, upper: 25.0}
+      - {code: OVERWEIGHT, label: Overweight (pre-obese), lower: 25.0, upper: 30.0}
+      - {code: OBESE_I, label: Obese class I, lower: 30.0, upper: 35.0}
+      - {code: OBESE_II, label: Obese class II, lower: 35.0, upper: 40.0}
+      - {code: OBESE_III, label: Obese class III, lower: 40.0, upper: null}
+    action_points: []
+  WHO_ASIAN_2004:
+    version: "1"
+    citation: "WHO Expert Consultation, Lancet 2004;363:157-163"
+    full_citation: "WHO Expert Consultation. Appropriate body-mass index for Asian populations and its implications for policy and intervention strategies. Lancet 2004;363:157-163."
+    categories:
+      - {code: UNDERWEIGHT, label: Underweight, lower: null, upper: 18.5}
+      - {code: NORMAL, label: Normal range, lower: 18.5, upper: 25.0}
+      - {code: OVERWEIGHT, label: Overweight (pre-obese), lower: 25.0, upper: 30.0}
+      - {code: OBESE_I, label: Obese class I, lower: 30.0, upper: 35.0}
+      - {code: OBESE_II, label: Obese class II, lower: 35.0, upper: 40.0}
+      - {code: OBESE_III, label: Obese class III, lower: 40.0, upper: null}
+    action_points:
+      - {value: 23.0, label: "Increased risk (action point 23)"}
+      - {value: 27.5, label: "High risk (action point 27.5)"}

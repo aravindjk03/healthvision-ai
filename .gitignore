@@ -2,6 +2,13 @@ config/healthvision.yaml
 models/*.onnx
 models/*.task
 data/
+reports/benchmarks/
 __pycache__/
+*.pyc
+.pytest_cache/
 node_modules/
+frontend/dist/
 .venv/
+*.egg-info/
+tests/fixtures/local/
+tsconfig.tsbuildinfo

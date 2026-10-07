@@ -101,7 +101,7 @@ Rules:
 - Use the 5-point similarity transform (`cv2.estimateAffinePartial2D`) to the ArcFace canonical 112×112 template:
   `[(38.2946,51.6963),(73.5318,51.5014),(56.0252,71.7366),(41.5493,92.3655),(70.7299,92.2041)]`.
 - Expression crop: from aligned 112×112 take centre crop, convert to grayscale, resize to 64×64 (FER+ input), no normalization beyond what the model card specifies (FER+ expects raw 0–255 float).
-- Keypoint source priority: landmark-derived 5 points (more stable) → detector keypoints → fail with `ALIGNMENT_FAILED` (expression NOT_AVAILABLE).
+- Keypoint source priority: detector (YuNet) 5 points → landmark-derived 5 points → fail with `ALIGNMENT_FAILED` (expression NOT_AVAILABLE). *Changed during the build: SFace's alignment uses the YuNet convention; see [17](17_IMPLEMENTATION_NOTES.md) §2.*
 
 ## 5. DecisionEngine (score → state)
 

@@ -100,6 +100,8 @@ The planning brief started at §13. Sections 1–12 (product introduction and BM
 - CPU baseline. Latency is reported only from measurement. No latency promise is made.
 - Still-image analysis only. There is no temporal smoothing (V2), so a single blink or mid-speech frame can change the expression estimate.
 - English UI only.
+- Occlusion check is approximate: it detects a face cut off by the frame edge, but a hand, mask or scarf over the face is not reliably detected ([17](17_IMPLEMENTATION_NOTES.md) §2).
+- Verification lockout counters are kept in memory and reset when the app restarts.
 - The wording lint catches listed phrases only. It does not replace human review of copy.
 - Security assumes the OS account and device are not compromised ([10](10_SECURITY_ARCHITECTURE.md) §1).
 

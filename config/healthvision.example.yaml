@@ -1,0 +1,114 @@
+# HealthVision AI configuration — single source of every threshold (docs/02 §8).
+# Copy to config/healthvision.yaml to customise. Values marked PROVISIONAL must be
+# tuned per docs/13_MODEL_VALIDATION.md before any production claim.
+config_schema_version: 1
+
+server:
+  host: 127.0.0.1
+  port: 8600
+  max_upload_bytes: 10485760
+  max_image_side_px: 4096
+
+paths:
+  data_dir: data                        # SQLite DB + report PDFs (relative to repo root)
+  models_dir: models
+  registry_file: models/registry.yaml
+
+features:
+  recognition_enabled: true
+  identification_enabled: false        # 1:N gallery search (V2)
+  liveness_enabled: false              # no validated liveness model in V1
+  store_raw_images: false
+  allow_restricted_licenses: false
+
+privacy:
+  policy_version: privacy-1.0
+  delete_on_revoke: true
+
+bmi:
+  reference: WHO_ADULT_2000            # WHO_ADULT_2000 | WHO_ASIAN_2004
+  adult_min_age: 18
+  height_cm: {min: 50, max: 272}
+  weight_kg: {min: 2, max: 635}
+  plausibility_warning: {bmi_min: 10, bmi_max: 80}
+
+face_detection:
+  engine: yunet
+  face_detection_threshold: 0.80        # PROVISIONAL
+  nms_threshold: 0.30
+  max_faces_considered: 10
+  min_secondary_face_confidence: 0.60   # faces above this count toward MULTIPLE_FACES
+  candidate_floor: 0.50                 # detector pre-filter passed to the engine
+
+quality:
+  min_image_short_side_px: 480
+  minimum_face_size_px: 112
+  brightness_threshold: {min_mean: 60, max_mean: 200}   # PROVISIONAL
+  blur_threshold: {laplacian_var_good: 120, laplacian_var_min: 60}  # PROVISIONAL
+  global_blur_min: 20                   # whole-image Laplacian variance floor, PROVISIONAL
+  pose_max_deg: {yaw_good: 15, yaw_max: 30, pitch_good: 15, pitch_max: 25, roll_max: 25}
+  occlusion: {min_landmark_visibility: 0.80}
+  grade_policy: worst_check
+  store_landmarks: false
+
+expression:
+  engine: ferplus_onnx
+  classes: [HAPPY, NEUTRAL, SAD, SURPRISED, ANGRY, FEARFUL, DISGUSTED]
+  class_map:
+    happiness: HAPPY
+    neutral: NEUTRAL
+    sadness: SAD
+    surprise: SURPRISED
+    anger: ANGRY
+    fear: FEARFUL
+    disgust: DISGUSTED
+    contempt: null
+  renormalize_after_exclusion: true
+  max_excluded_mass: 0.5
+  expression_confidence_threshold:
+    high: 0.85
+    moderate: 0.60
+  min_top2_margin: 0.15                 # PROVISIONAL
+  temperature: 1.0
+
+recognition:
+  engine: sface
+  calibration_file: models/calibration/sface_v1.json   # absent => DEMO-UNCALIBRATED mode
+  demo_uncalibrated_thresholds:
+    recognition_threshold: 0.40
+    no_match_threshold: 0.30
+  enrollment_frames: {min: 1, recommended: 3, max: 5}
+  max_templates_per_user: 5
+  rate_limit: {per_minute: 5, per_hour: 30}
+  enroll_rate_limit: {per_hour: 3}
+  lockout_after_consecutive_no_match: 10
+  lockout_minutes: 15
+
+retention:
+  retention_period_days:
+    bmi_records: 365
+    expression_results: 90
+    face_observations: 90
+    recognition_events: 90
+    analysis_sessions: 365
+    reports: 90
+    audit_logs: 730
+  template_max_age_days: 730
+  purge_interval_minutes: 60
+
+security:
+  session_idle_minutes: 30
+  session_absolute_hours: 8
+  password_min_length: 12
+  login_rate_limit: {per_minute: 5}
+  face_rate_limit: {per_minute: 60}
+  max_sessions_per_user: 3
+  # Where the template key-encryption key (KEK) comes from:
+  #   os  = OS keystore via `keyring` (Windows Credential Manager, macOS Keychain, Secret Service)
+  #   env = base64 32-byte key in HEALTHVISION_KEK (explicit opt-in for containers/CI)
+  # If the KEK is unavailable, recognition is disabled. There is never a plaintext-file fallback.
+  keystore: os
+
+logging:
+  level: INFO
+  log_images: false                     # must remain false; startup refuses true
