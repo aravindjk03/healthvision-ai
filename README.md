@@ -64,6 +64,17 @@ for one device. Before exposing it beyond localhost, put it behind HTTPS and acc
 and read [docs/14](docs/14_PRODUCTION_ROADMAP.md) §6 and [docs/09](docs/09_PRIVACY_ARCHITECTURE.md) §7.
 Biometric data has legal requirements in most jurisdictions.
 
+### Sharing with your team
+
+| Option | What the team gets | How |
+|---|---|---|
+| **GitHub Pages** (recommended for testing) | The browser-only version at `https://<owner>.github.io/healthvision-ai/`, with camera, BMI, face analysis and verification. Photos never leave each person's browser | 1. Merge to `main`. 2. Repo **Settings → Pages → Source: GitHub Actions**. 3. The workflow `.github/workflows/pages.yml` builds and deploys on every push to `main` (or run it manually from the **Actions** tab). Pages on a private repo needs a paid GitHub plan; on a free plan the repo must be public. The site is reachable by anyone with the URL |
+| **Shared claude.ai link** | The same browser version (photo upload only, the camera is blocked inside that viewer) | Open the link → **Share** → add teammates |
+| **Full app on a server** | Logins, history, PDF reports, audit log | Deploy the `Dockerfile` to a cloud host (Cloud Run, Render, Azure, …). Admins add users under **Settings → Users**. Needs HTTPS for the camera and a privacy review before real biometric data is used |
+| **Full app on each laptop** | Everything, offline | Each person runs `scripts/setup.ps1` + `scripts/run.ps1` |
+
+GitHub itself only stores the code. It cannot run the Python server, so the full app always needs one of the last two options.
+
 ### Code layout
 
 ```

@@ -89,6 +89,14 @@ select { width: auto; }
 
 .drop { border: 2px dashed var(--line); border-radius: 10px; padding: 26px 14px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; cursor: pointer; }
 .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.cam-btn { align-self: flex-start; }
+.cam-dialog { position: fixed; inset: 0; background: color-mix(in srgb, #000 70%, transparent); display: grid; place-items: center; padding: 16px; z-index: 10; }
+.cam-box { background: var(--surface); border-radius: var(--radius); padding: 16px; width: min(720px, 100%); display: flex; flex-direction: column; gap: 12px; }
+.cam-view { position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; max-width: 100%; }
+.cam-view video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+.cam-view svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cam-view ellipse { fill: none; stroke: #fff; stroke-opacity: .85; stroke-width: .6; stroke-dasharray: 2 1.4; vector-effect: non-scaling-stroke; }
+.cam-guide { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #fff; font-weight: 600; text-shadow: 0 1px 3px #000; }
 .drop input { display: none; }
 .preview { position: relative; border-radius: 10px; overflow: hidden; background: var(--sunk); }
 .preview canvas { display: block; width: 100%; height: auto; }
@@ -206,6 +214,7 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
           <strong>Choose a photo with one face</strong>
           <span class="muted small">JPEG or PNG, up to 10 MB. Face the camera in soft, even light. The photo stays on this device.</span>
         </label>
+        <button class="btn cam-btn" type="button" data-camera="face">Use camera</button>
         <div class="preview" id="face-preview" hidden><canvas id="face-canvas"></canvas></div>
       </section>
       <section class="card panel ai stack" aria-live="polite" id="face-result">
@@ -227,6 +236,7 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
         <h3>Enroll your face</h3>
         <p class="muted small">Add 1–5 clear photos of yourself (3 recommended). Only a face template (a list of numbers) is kept, in this tab's memory. It is cleared when you close or reload the page.</p>
         <label class="drop" id="enroll-drop" for="enroll-file"><input type="file" id="enroll-file" accept="image/jpeg,image/png" multiple><strong>Choose enrollment photos</strong><span class="muted small">Each photo needs GOOD quality and one face.</span></label>
+        <button class="btn cam-btn" type="button" data-camera="enroll">Use camera (adds one photo at a time)</button>
         <div class="thumbs" id="enroll-thumbs"></div>
         <div id="enroll-msg"></div>
         <div class="row"><button class="btn danger" id="enroll-clear" hidden>Delete my face template</button></div>
@@ -235,6 +245,7 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
         <span class="kicker k-id">STEP 2 · VERIFY</span>
         <h3>Verify my identity</h3>
         <label class="drop" id="verify-drop" for="verify-file"><input type="file" id="verify-file" accept="image/jpeg,image/png" disabled><strong>Choose a photo to verify</strong><span class="muted small" id="verify-hint">Enroll first.</span></label>
+        <button class="btn cam-btn" type="button" data-camera="verify" disabled>Use camera</button>
         <div id="verify-result"></div>
       </section>
     </div>
@@ -268,13 +279,25 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
         </ul>
         <h3>Differences from the full app</h3>
         <ul class="plain small">
-          <li>Photo upload only. Embedded pages cannot use the camera; the full app supports a live camera.</li>
+          <li>Camera works when this page is opened as a normal website (for example GitHub Pages). Inside an embedded viewer the camera may be blocked; use photo upload there.</li>
           <li>No accounts, history, PDF reports or audit log. Results live in this tab and disappear on reload.</li>
           <li>The detector runs on a 640×640 letterboxed copy of your photo, so boxes can differ by a few pixels from the full app.</li>
         </ul>
       </section>
     </div>
   </section>
+
+  <div class="cam-dialog" id="cam-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="cam-title">
+    <div class="cam-box">
+      <h3 id="cam-title">Camera</h3>
+      <div class="cam-view"><video id="cam-video" muted playsinline></video>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="48" rx="20" ry="34"/></svg>
+        <div class="cam-guide">Position one face inside the frame.</div></div>
+      <p class="note n-bad" id="cam-error" hidden></p>
+      <div class="row"><button class="btn primary" id="cam-capture" disabled>Capture</button><button class="btn" id="cam-cancel">Cancel</button>
+        <span class="muted small">The live preview stays in your browser. Nothing is sent anywhere.</span></div>
+    </div>
+  </div>
 
   <footer class="foot">These are separate measurements to help you reflect — not a medical diagnosis or a reading of how you feel.</footer>
 </div>
@@ -350,7 +373,7 @@ function renderConsent() {
     if (!v) {
       if (p === "BMI") S.bmi = null;
       if (p === "FACE_ANALYSIS") S.face = null;
-      if (p === "RECOGNITION") { S.templates = []; S.verify = null; renderEnroll(); $("verify-result").innerHTML = ""; }
+      if (p === "RECOGNITION") { S.templates = []; enrollQueue.length = 0; S.verify = null; renderEnroll(); $("verify-result").innerHTML = ""; }
     }
     renderConsent(); renderGates();
   }));
@@ -747,11 +770,48 @@ function wireDrop(labelId, inputId, handler) {
 }
 wireDrop("face-drop", "face-file", (fs) => analyzeFace(fs[0]));
 
+// ===================================================================== camera (works on a normal https site; may be refused inside embedded viewers)
+let camStream = null, camHandler = null;
+function closeCamera() {
+  camStream?.getTracks().forEach((t) => t.stop()); camStream = null; camHandler = null;
+  $("cam-video").srcObject = null; $("cam-dialog").hidden = true;
+}
+async function openCamera(handler) {
+  camHandler = handler;
+  $("cam-dialog").hidden = false; $("cam-error").hidden = true; $("cam-capture").disabled = true;
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("unsupported");
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 960 }, facingMode: "user" }, audio: false });
+    const v = $("cam-video"); v.srcObject = camStream; await v.play();
+    $("cam-capture").disabled = false;
+  } catch {
+    $("cam-error").hidden = false;
+    $("cam-error").textContent = "The camera is not available here (no permission, no camera, or this viewer blocks it). Please choose a photo instead.";
+  }
+}
+$("cam-cancel").addEventListener("click", closeCamera);
+$("cam-dialog").addEventListener("keydown", (e) => { if (e.key === "Escape") closeCamera(); });
+$("cam-capture").addEventListener("click", () => {
+  const v = $("cam-video"); if (!v.videoWidth) return;
+  const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext("2d").drawImage(v, 0, 0);
+  const handler = camHandler;
+  c.toBlob((b) => { closeCamera(); if (b && handler) handler(new File([b], "camera.jpg", { type: "image/jpeg" })); }, "image/jpeg", 0.92);
+});
+const enrollQueue = [];
+document.querySelectorAll("[data-camera]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.camera;
+  if (k === "face") openCamera((f) => analyzeFace(f));
+  if (k === "verify") openCamera((f) => verify(f));
+  if (k === "enroll") openCamera((f) => { enrollQueue.push(f); enroll(enrollQueue.slice(-CFG.recognition.enrollment_max)); });
+}));
+
 // ===================================================================== enrollment + verification
 function renderEnroll() {
   const has = S.templates.length > 0;
   $("enroll-clear").hidden = !has;
   $("verify-file").disabled = !has;
+  document.querySelector('[data-camera="verify"]').disabled = !has;
   $("verify-hint").textContent = has ? `Compares a new photo with your ${S.templates.length} enrolled template(s).` : "Enroll first.";
   if (!has) { $("enroll-thumbs").innerHTML = ""; }
 }
@@ -802,7 +862,7 @@ async function verify(file) {
 }
 wireDrop("enroll-drop", "enroll-file", (fs) => enroll(fs));
 wireDrop("verify-drop", "verify-file", (fs) => verify(fs[0]));
-$("enroll-clear").addEventListener("click", () => { S.templates = []; S.verify = null; $("enroll-msg").innerHTML = `<p class="note n-good">Face template deleted.</p>`; $("verify-result").innerHTML = ""; renderEnroll(); });
+$("enroll-clear").addEventListener("click", () => { S.templates = []; enrollQueue.length = 0; S.verify = null; $("enroll-msg").innerHTML = `<p class="note n-good">Face template deleted.</p>`; $("verify-result").innerHTML = ""; renderEnroll(); });
 
 // ===================================================================== dashboard
 function renderDashboard() {

@@ -7,6 +7,7 @@ artifact host caps each file at 15 MB; the page re-joins them byte-for-byte.
 import base64
 import json
 import shutil
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -31,7 +32,16 @@ def main() -> None:
     shutil.rmtree(DIST, ignore_errors=True)
     (DIST / "lib" / "mp").mkdir(parents=True)
     (DIST / "models").mkdir()
-    shutil.copy(HERE / "index.html", DIST / "index.html")
+    page = (HERE / "index.html").read_text()
+    if "--standalone" in sys.argv:
+        # A normal website (e.g. GitHub Pages) needs the document shell that the artifact host adds itself.
+        page = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
+                '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+                '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E'
+                '%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%230d6b66%22/%3E%3C/svg%3E">'
+                '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>'
+                + page + "</body></html>")
+    (DIST / "index.html").write_text(page)
     ort = NM / "onnxruntime-web" / "dist"
     for f in ("ort.wasm.min.js", "ort-wasm-simd-threaded.mjs", "ort-wasm-simd-threaded.wasm"):
         shutil.copy(ort / f, DIST / "lib" / f)
