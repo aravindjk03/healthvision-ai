@@ -41,14 +41,25 @@ def test_mandatory_notes_present():
     from healthvision.domain import messages as M
     msgs = " ".join(v if isinstance(v, str) else " ".join(map(str, v.values())) for k, v in vars(M).items()
                     if k.isupper())
-    for needle in ["should not be interpreted as a definitive measure of emotional state",
-                   "BMI is a screening measure and does not constitute a medical diagnosis",
-                   "Multiple faces detected. Please ensure only one person is in frame.",
+    for needle in ["It describes the face at that moment, not how you feel inside.",
+                   "BMI is a screening measure, not a medical diagnosis",
+                   "Multiple faces detected. Please make sure only one person is in the frame.",
                    "Liveness detection is not implemented in this version.",
-                   "These outputs are separate measurements"]:
+                   "These are separate measurements"]:
         assert needle in msgs
     dash = (ROOT / "frontend" / "src" / "App.tsx").read_text()
-    assert "These outputs are separate measurements" in dash
+    assert "These are separate measurements" in dash
+
+
+def test_expression_display_is_positive_and_complete():
+    """Every product class has calm, descriptive display wording and a supportive context line."""
+    from healthvision.domain import messages as M
+    classes = ["HAPPY", "NEUTRAL", "SAD", "SURPRISED", "ANGRY", "FEARFUL", "DISGUSTED"]
+    for c in classes:
+        assert M.EXPRESSION_DISPLAY[c] and M.EXPRESSION_DESCRIPTION[c] and M.EXPRESSION_CONTEXT[c]
+    shown = " ".join(M.EXPRESSION_DISPLAY.values()).lower()
+    for harsh in ("angry", "sad", "fear", "disgust"):
+        assert harsh not in shown
     pdf = (ROOT / "backend" / "healthvision" / "reports" / "pdf.py").read_text()
     assert "limitations" in pdf
 

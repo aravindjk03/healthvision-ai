@@ -152,5 +152,5 @@ class BmiService:
         cat = classify(bmi, ref)
         trace["outcome"] = cat["code"]
         return {"status": BmiStatus.VALID.value, **base, "category_code": cat["code"], "category_label": cat["label"],
-                "trace": trace}
+                "guidance": M.BMI_GUIDANCE.get(cat["code"]), "trace": trace}
 

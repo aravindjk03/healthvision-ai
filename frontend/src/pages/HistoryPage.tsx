@@ -34,7 +34,7 @@ export default function HistoryPage() {
               <tr key={i.analysis_id}>
                 <td>{new Date(i.started_at).toLocaleString()}</td>
                 <td>{i.bmi ? `${i.bmi} · ${i.bmi_category}` : "—"}</td>
-                <td>{i.expression ? i.expression.charAt(0) + i.expression.slice(1).toLowerCase() : i.expression_status?.replace("_", " ").toLowerCase() ?? "—"}</td>
+                <td>{i.expression ?? (i.expression_status === "UNCERTAIN" ? "Retake suggested" : "—")}</td>
                 <td>{i.recognition?.replace("_", " ") ?? "—"}</td>
                 <td><Link to={`/dashboard/${i.analysis_id}`}>Open</Link></td>
               </tr>

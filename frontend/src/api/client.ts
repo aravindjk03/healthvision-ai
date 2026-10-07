@@ -57,7 +57,7 @@ export interface BmiResult {
   bmi: number | null; bmi_display: string | null;
   category_code?: string | null; category_label?: string | null;
   calculation?: string; reference: { code: string; citation: string; version: string };
-  warnings?: string[]; limitation: string; message?: string;
+  warnings?: string[]; limitation: string; message?: string; guidance?: string | null;
   errors?: { field: string; code: string; message: string }[];
   action_points?: { value: number; label: string }[];
 }
@@ -67,7 +67,8 @@ export interface Face { face_index: number; bbox: { x: number; y: number; w: num
 
 export interface ExpressionResult {
   status: "ESTIMATED" | "UNCERTAIN" | "NOT_AVAILABLE";
-  expression: string | null; display: string; confidence: number | null; confidence_label: string;
+  expression: string | null; expression_label: string | null; display: string; context: string | null;
+  probability_labels: Record<string, string>; confidence: number | null; confidence_label: string;
   confidence_band: "HIGH" | "MODERATE" | null; probabilities: Record<string, number> | null;
   observation: string | null; note: string; not_available_reason: string | null;
   model: { model_id: string; version: string };

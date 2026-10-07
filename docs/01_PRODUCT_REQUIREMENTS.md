@@ -78,7 +78,7 @@ IDs are referenced by tests in [12_TESTING_STRATEGY.md](12_TESTING_STRATEGY.md).
 - **FR-FACE-6** Image quality → GOOD / ACCEPTABLE / POOR with per-check reasons. POOR → `REVIEW / RETAKE IMAGE`, no expression result.
 - **FR-FACE-7** Landmarks for alignment, pose and quality. Never presented as medical findings.
 - **FR-FACE-8** Expression estimate with status ESTIMATED / UNCERTAIN / NOT_AVAILABLE, confidence, confidence band, full class probability vector stored.
-- **FR-FACE-9** UI wording: "Facial expression estimate: Happy". Never "Person is happy".
+- **FR-FACE-9** UI wording: "Facial expression estimate: Smiling". Never "Person is happy".
 - **FR-FACE-10** RETAKE and ANALYZE buttons.
 
 ### Recognition
@@ -123,15 +123,19 @@ IDs are referenced by tests in [12_TESTING_STRATEGY.md](12_TESTING_STRATEGY.md).
 
 | Context | Text |
 |---|---|
-| Expression label | "Facial expression estimate: {Class}" |
-| Expression observation (ESTIMATED) | "Visible facial expression is consistent with a {class}-expression classification." |
-| Expression UNCERTAIN | "Expression could not be estimated reliably from this image." |
-| Expression system note | "Facial expression is an AI estimate based on visible facial features and should not be interpreted as a definitive measure of emotional state." |
-| BMI health note | "BMI is a screening measure and does not constitute a medical diagnosis." |
-| Multiple faces | "Multiple faces detected. Please ensure only one person is in frame." |
+| Expression label | "Facial expression estimate: {Display label}". Display labels describe visible features in calm wording: Smiling, Calm / neutral, Surprised, Downcast, Frowning, Wide-eyed, Nose wrinkled. Internal classes stay HAPPY, NEUTRAL, SURPRISED, SAD, ANGRY, FEARFUL, DISGUSTED |
+| Expression observation (ESTIMATED) | "The face in this photo shows {description}." (e.g. "a warm smile", "a softer, downturned expression") |
+| Expression context (ESTIMATED) | Smiling: "A lovely, bright expression in this photo." Calm: "A calm, steady expression in this photo." Downcast / Frowning / Wide-eyed / Nose wrinkled: "Faces change from moment to moment — this captures just one instant, and it says nothing about who you are or how your day is going. Feel free to take another photo anytime." |
+| Expression UNCERTAIN | "We need a clearer view to estimate the expression — try facing the camera in soft, even light." |
+| Expression system note | "This is an AI estimate of the visible facial expression in one photo. It describes the face at that moment, not how you feel inside." |
+| BMI health note | "BMI is a helpful screening number; a healthcare professional can put it in full context for you." |
+| BMI guidance | Per WHO category, encouraging and factual, e.g. Normal range: "Great — your BMI is within the WHO adult normal range." Other ranges point to a healthcare professional for the full picture. The category label itself is never changed |
+| Multiple faces | "Multiple faces detected. Please make sure only one person is in the frame." |
 | Recognition notice | "Facial recognition uses biometric information to verify or identify an enrolled person." |
 | Liveness | "Liveness detection is not implemented in this version." |
-| Dashboard footer | "These outputs are separate measurements and should not be interpreted as a medical diagnosis or definitive emotional state." |
+| Dashboard footer | "These are separate measurements to help you reflect — not a medical diagnosis or a reading of how you feel." |
+
+Tone rule: wording is warm and encouraging, but the **result itself is never changed**. The label shown always corresponds to the model's actual top class, and the BMI category is always the WHO category. A positive tone must not turn into a false reading.
 
 Forbidden strings (CI lint check, see [12](12_TESTING_STRATEGY.md)): "is happy", "definitely", "proves", "health score", "diagnos" (in result text), "100% accurate", "anti-spoof" (unless liveness validated), "mental health".
 

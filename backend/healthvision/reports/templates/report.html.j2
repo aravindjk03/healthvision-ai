@@ -20,6 +20,7 @@
 <table>
 <tr><td>BMI</td><td>{{ r.bmi.bmi_display }}</td></tr>
 <tr><td>Category</td><td>{{ r.bmi.category_label or r.bmi.message }}</td></tr>
+{% if r.bmi.guidance %}<tr><td>Context</td><td>{{ r.bmi.guidance }}</td></tr>{% endif %}
 <tr><td>Calculation</td><td>{{ r.bmi.calculation }}</td></tr>
 <tr><td>Reference</td><td>{{ r.bmi.reference.citation }}</td></tr>
 <tr><td>Limitation</td><td>{{ r.bmi.limitation }}</td></tr>
@@ -33,6 +34,7 @@
 <tr><td>Image quality</td><td>{{ r.quality.grade if r.quality else '—' }}</td></tr>
 {% if r.expression %}
 <tr><td>Expression</td><td>{{ r.expression.display }}</td></tr>
+{% if r.expression.context %}<tr><td>Context</td><td>{{ r.expression.context }}</td></tr>{% endif %}
 <tr><td>Confidence</td><td>{% if r.expression.confidence is not none %}{% if r.expression.confidence >= 0.995 %}&gt;99%{% else %}{{ (r.expression.confidence * 100) | round | int }}%{% endif %} — {{ r.expression.confidence_label }}{% else %}—{% endif %}</td></tr>
 <tr><td>Note</td><td>{{ r.expression.note }}</td></tr>
 {% endif %}

@@ -107,7 +107,7 @@ def test_no_face(admin):
     j = admin.upload("/api/v1/face/expression", _blank()).json()
     assert j["face"]["face_state"] == "NO_FACE"
     assert j["expression"]["status"] == "NOT_AVAILABLE"
-    assert j["message"] == "No face detected. Please retake the image."
+    assert j["message"] == "Let's try again — make sure your face is inside the frame."
     assert "latency_ms" in j and j["latency_ms"]["detection"] >= 0
 
 
@@ -142,6 +142,7 @@ def test_expression_on_single_face(admin):
     assert e["status"] in ("ESTIMATED", "UNCERTAIN")
     if e["status"] == "ESTIMATED":
         assert e["display"].startswith("Facial expression estimate: ")
+        assert e["context"] and e["expression_label"] in e["display"]
     assert "points" not in j["landmarks"]
 
 
@@ -150,7 +151,7 @@ def test_multiple_faces_blocks_everything(admin):
     j = admin.upload("/api/v1/face/expression", face_fixture("two_people.jpg"), "t.jpg").json()
     assert j["face"]["face_state"] == "MULTIPLE_FACES"
     assert j["expression"]["status"] == "NOT_AVAILABLE"
-    assert j["message"] == "Multiple faces detected. Please ensure only one person is in frame."
+    assert j["message"] == "Multiple faces detected. Please make sure only one person is in the frame."
 
 
 def test_enroll_verify_revoke(admin):

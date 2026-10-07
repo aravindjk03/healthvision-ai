@@ -47,12 +47,13 @@ export function ExpressionCard({ e }: { e: ExpressionResult }) {
           Confidence: <strong>{pct(e.confidence)}</strong> ({e.confidence_band === "HIGH" ? "high" : "moderate"}-confidence estimate) — {e.confidence_label}
         </div>
       )}
-      {e.observation && <p className="obs">Observation: {e.observation}</p>}
+      {e.observation && <p className="obs">{e.observation}</p>}
+      {e.context && <p className="context">{e.context}</p>}
       {e.probabilities && (
         <div className="bars" aria-label="Class probabilities">
           {Object.entries(e.probabilities).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
             <div className="bar-row" key={k}>
-              <span className="bar-label">{k.charAt(0) + k.slice(1).toLowerCase()}</span>
+              <span className="bar-label">{e.probability_labels?.[k] ?? k.charAt(0) + k.slice(1).toLowerCase()}</span>
               <span className="bar"><span style={{ width: `${(v * 100).toFixed(1)}%` }} /></span>
               <span className="bar-val">{pct(v)}</span>
             </div>

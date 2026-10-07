@@ -164,6 +164,7 @@ input:focus, select:focus, button:focus-visible, a:focus-visible { outline: 3px 
 .expr-head .kicker { color: var(--ai); margin: 0; }
 .expr-main { font-size: 1.3rem; font-weight: 700; margin: .4rem 0; }
 .obs { font-style: italic; }
+.context { background: var(--good-soft); color: var(--good); padding: .5rem .75rem; border-radius: 8px; font-weight: 500; margin-top: .5rem; }
 .note { font-size: .85rem; color: var(--muted); border-top: 1px solid color-mix(in srgb, var(--ai) 25%, transparent); padding-top: .5rem; margin-top: .7rem; }
 .bars { display: grid; gap: .2rem; margin-top: .6rem; }
 .bar-row { display: grid; grid-template-columns: 90px 1fr 44px; gap: .5rem; align-items: center; font-size: .82rem; }

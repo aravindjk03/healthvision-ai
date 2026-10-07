@@ -101,7 +101,10 @@ export default function BmiPage() {
             <>
               <div className={`bmi-big ${result.status === "NOT_APPLICABLE" ? "grey" : ""}`}>{result.bmi_display}<small> kg/m²</small></div>
               {result.status === "VALID" ? (
-                <div><Badge kind="info">{result.category_label}</Badge></div>
+                <>
+                  <div><Badge kind={result.category_code === "NORMAL" ? "good" : "info"}>{result.category_label}</Badge></div>
+                  {result.guidance && <p className="context">{result.guidance}</p>}
+                </>
               ) : (
                 <div className="info">{result.message}</div>
               )}

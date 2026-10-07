@@ -110,17 +110,20 @@ class FaceAnalysisService:
 
     def _expression_dto(self, dec: DE.ExpressionDecision, model_key: str, r: PipelineResult) -> dict:
         model_id, _, version = model_key.partition("@")
-        label = dec.label.capitalize() if dec.label else None
+        label = M.EXPRESSION_DISPLAY.get(dec.label, dec.label) if dec.label else None
+        context = None
         if dec.status == ExpressionStatus.ESTIMATED:
             display = M.EXPRESSION_LABEL.format(label=label)
-            observation = M.EXPRESSION_OBSERVATION.format(cls=dec.label.lower())
+            observation = M.EXPRESSION_OBSERVATION.format(desc=M.EXPRESSION_DESCRIPTION.get(dec.label, label.lower()))
+            context = M.EXPRESSION_CONTEXT.get(dec.label)
         elif dec.status == ExpressionStatus.UNCERTAIN:
             display, observation = M.EXPRESSION_UNCERTAIN, None
         else:
             display = r.message or (M.MODEL_UNAVAILABLE if dec.not_available_reason == "MODEL_UNAVAILABLE" else M.EXPRESSION_UNCERTAIN)
             observation = None
         return {
-            "status": dec.status.value, "expression": dec.label, "display": display,
+            "status": dec.status.value, "expression": dec.label, "expression_label": label, "display": display,
+            "context": context, "probability_labels": dict(M.EXPRESSION_DISPLAY),
             "confidence": dec.confidence, "confidence_label": M.CONFIDENCE_LABEL,
             "confidence_band": dec.band.value if dec.band else None,
             "probabilities": dec.probabilities, "observation": observation, "note": M.EXPRESSION_NOTE,

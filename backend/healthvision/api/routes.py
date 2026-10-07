@@ -326,7 +326,8 @@ def history(request: Request, page: int = 1, page_size: int = 20, date_from: Opt
             items.append({"analysis_id": r.session_id, "started_at": r.started_at,
                           "bmi": bres.get("bmi_display") if bres else None,
                           "bmi_category": (bres.get("category_label") or bres.get("status")) if bres else None,
-                          "expression": ex.expression if ex else None, "expression_status": ex.status if ex else None,
+                          "expression": M.EXPRESSION_DISPLAY.get(ex.expression, ex.expression) if ex and ex.expression else None,
+                          "expression_status": ex.status if ex else None,
                           "recognition": rec.decision if rec else None})
         days = c.cfg.settings.retention.retention_period_days
         return {"items": items, "page": page, "page_size": page_size, "total": total,

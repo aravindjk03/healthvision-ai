@@ -25,6 +25,7 @@ def test_demo_value():
     assert r["category_label"] == "Normal range"
     assert r["calculation"] == "65.0 kg ÷ (1.70 m)² = 22.49 kg/m²"
     assert r["reference"]["code"] == "WHO_ADULT_2000"
+    assert r["guidance"].startswith("Great")
 
 
 @pytest.mark.parametrize("bmi,code", [(18.4999, "UNDERWEIGHT"), (18.5, "NORMAL"), (24.9999, "NORMAL"), (25.0, "OVERWEIGHT"),
@@ -73,7 +74,7 @@ def test_pediatric_not_applicable():
     assert r["status"] == "NOT_APPLICABLE"
     assert r["category_code"] is None
     assert r["bmi_display"] is not None
-    assert "do not apply under 18" in r["message"]
+    assert "under 18" in r["message"] and "growth charts" in r["message"]
 
 
 def test_age_missing_assumes_adult():
@@ -85,7 +86,7 @@ def test_age_missing_assumes_adult():
 
 def test_plausibility_warning():
     r = calc(100, 9, 30)
-    assert "Please check the entered values." in r["warnings"]
+    assert "Please double-check the entered values." in r["warnings"]
 
 
 @given(st.floats(min_value=0.5, max_value=2.72), st.floats(min_value=2, max_value=635))

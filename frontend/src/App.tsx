@@ -69,7 +69,7 @@ export default function App() {
         </Routes>
       </main>
       <footer className="footer muted">
-        These outputs are separate measurements and should not be interpreted as a medical diagnosis or definitive emotional state.
+        These are separate measurements to help you reflect — not a medical diagnosis or a reading of how you feel.
       </footer>
     </div>
   );

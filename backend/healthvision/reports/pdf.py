@@ -38,7 +38,7 @@ def render_pdf(r: dict, path: Path) -> None:
     b = r.get("bmi")
     if b:
         story.append(_table([("BMI", b.get("bmi_display")), ("Category", b.get("category_label") or b.get("message")),
-                             ("Status", b.get("status")), ("Calculation", b.get("calculation")),
+                             ("Status", b.get("status")), ("Context", b.get("guidance")), ("Calculation", b.get("calculation")),
                              ("Reference", (b.get("reference") or {}).get("citation")),
                              ("Limitation", b.get("limitation"))]))
     else:
@@ -51,7 +51,7 @@ def render_pdf(r: dict, path: Path) -> None:
                  ("Image quality", (q or {}).get("grade"))]
         if e:
             conf = e.get("confidence")
-            pairs += [("Expression", e.get("display")),
+            pairs += [("Expression", e.get("display")), ("Context", e.get("context")),
                       ("Confidence", f"{pct(conf)} — {e.get('confidence_label')}" if conf is not None else None),
                       ("Confidence band", e.get("confidence_band")), ("Status", e.get("status")),
                       ("Note", e.get("note"))]

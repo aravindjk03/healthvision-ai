@@ -60,7 +60,8 @@ export default function DashboardPage() {
           {bmi ? (
             <>
               <div className={`bmi-big ${bmi.status === "NOT_APPLICABLE" ? "grey" : ""}`}>{bmi.bmi_display}<small> kg/m²</small></div>
-              {bmi.status === "VALID" ? <Badge kind="info">{bmi.category_label}</Badge> : <p className="info">{bmi.message}</p>}
+              {bmi.status === "VALID" ? <Badge kind={bmi.category_code === "NORMAL" ? "good" : "info"}>{bmi.category_label}</Badge> : <p className="info">{bmi.message}</p>}
+              {bmi.guidance && <p className="context">{bmi.guidance}</p>}
               <p className="small">{bmi.calculation}</p>
               <p className="muted small">Reference: {bmi.reference.citation}</p>
             </>
