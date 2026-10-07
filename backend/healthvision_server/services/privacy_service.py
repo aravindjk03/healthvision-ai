@@ -17,7 +17,7 @@ from ..storage.orm import (AnalysisSession, AuthSession, BmiRecord, ExpressionRe
 from ..storage.template_store import TemplateStore
 from .audit_service import AuditService
 
-log = logging.getLogger("healthvision.privacy")
+log = logging.getLogger("healthvision_server.privacy")
 
 
 class PrivacyService:

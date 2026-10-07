@@ -51,3 +51,15 @@ These checks used public-domain sample photos fetched by `tools/fetch_test_fixtu
 - An enrolled person verified against a different photo of the same person returned MATCH. A different person returned NO_MATCH. Both decisions are labelled demo-uncalibrated.
 - Revoking recognition consent crypto-shreds the templates and blocks verification.
 - `pytest`: 99 tests (unit, contract, integration, wording lint). A Playwright run of the full UI journey passed with a simulated camera.
+
+## 6. Living alongside the Streamlit app
+
+`main` gained a Streamlit implementation (`streamlit_app.py`, package `healthvision/`, `config/healthvision.yaml`, `models/registry.yaml`) intended for hosting on Streamlit Community Cloud. To keep both versions working in one repository:
+
+| Item | Streamlit app | FastAPI app (this build) |
+|---|---|---|
+| Python package | `healthvision/` | `backend/healthvision_server/` (renamed from `healthvision` so the two never shadow each other) |
+| Settings file | `config/healthvision.yaml` | `config/server.yaml` (copy of `config/server.example.yaml`) |
+| Model registry | `models/registry.yaml` | `models/server-registry.yaml` (same four files, same SHA-256) |
+| Tests | `tests/test_*.py` | `tests/unit/`, `tests/integration/`, `tests/wording_lint/` |
+| Start | `streamlit run streamlit_app.py` | `scripts/run.ps1` / `scripts/run.sh` (`python -m healthvision_server.main`) |

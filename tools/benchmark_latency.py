@@ -20,7 +20,7 @@ def main() -> None:
     ap.add_argument("--runs", type=int, default=200)
     args = ap.parse_args()
     cfg, reg, pipe = load_registry_and_pipeline()
-    from healthvision.core.latency import LatencyRecorder
+    from healthvision_server.core.latency import LatencyRecorder
 
     data = Path(args.image).read_bytes()
     samples: dict[str, list[float]] = {}

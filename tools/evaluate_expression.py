@@ -19,8 +19,8 @@ def main() -> None:
     ap.add_argument("--dataset-name", required=True)
     args = ap.parse_args()
     cfg, reg, pipe = load_registry_and_pipeline()
-    from healthvision.core.latency import LatencyRecorder
-    from healthvision.services import decision_engine as DE
+    from healthvision_server.core.latency import LatencyRecorder
+    from healthvision_server.services import decision_engine as DE
 
     classes = cfg.settings.expression.classes
     y_true, y_pred, conf, status = [], [], [], []

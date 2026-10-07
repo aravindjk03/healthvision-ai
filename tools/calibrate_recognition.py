@@ -27,7 +27,7 @@ def main() -> None:
     ap.add_argument("--write", action="store_true", help="install the calibration file")
     args = ap.parse_args()
     cfg, reg, pipe = load_registry_and_pipeline()
-    from healthvision.core.latency import LatencyRecorder
+    from healthvision_server.core.latency import LatencyRecorder
 
     rows = read_manifest(args.manifest)
     emb, rejected = [], 0

@@ -44,7 +44,7 @@ def test_detector_contract(registry):
 
 
 def test_expression_and_embedding_contract(registry):
-    from healthvision.engines.alignment.similarity_transform import align_112
+    from healthvision_server.engines.alignment.similarity_transform import align_112
     img = _img()
     d = registry.engine("detector").detect(img, 0.5, 0.3, 10)[0]
     aligned = align_112(img, d.keypoints5)

@@ -5,10 +5,10 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from conftest import ROOT
-from healthvision.config.settings import BmiCfg
-from healthvision.services.bmi_service import BmiService
+from healthvision_server.config.settings import BmiCfg
+from healthvision_server.services.bmi_service import BmiService
 
-CFG = BmiCfg.model_validate(yaml.safe_load((ROOT / "config" / "healthvision.example.yaml").read_text())["bmi"])
+CFG = BmiCfg.model_validate(yaml.safe_load((ROOT / "config" / "server.example.yaml").read_text())["bmi"])
 svc = BmiService(CFG, "test")
 
 

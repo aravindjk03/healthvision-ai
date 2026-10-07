@@ -15,8 +15,8 @@ NEGATION = re.compile(r"(no|not|never|does not|cannot|isn't|is not|without|n't)\
 SCAN = [
     *(ROOT / "frontend" / "src").rglob("*.tsx"),
     *(ROOT / "frontend" / "src").rglob("*.ts"),
-    ROOT / "backend" / "healthvision" / "domain" / "messages.py",
-    *(ROOT / "backend" / "healthvision" / "reports").rglob("*.*"),
+    ROOT / "backend" / "healthvision_server" / "domain" / "messages.py",
+    *(ROOT / "backend" / "healthvision_server" / "reports").rglob("*.*"),
 ]
 
 
@@ -38,7 +38,7 @@ def test_no_forbidden_wording(path):
 
 
 def test_mandatory_notes_present():
-    from healthvision.domain import messages as M
+    from healthvision_server.domain import messages as M
     msgs = " ".join(v if isinstance(v, str) else " ".join(map(str, v.values())) for k, v in vars(M).items()
                     if k.isupper())
     for needle in ["It describes the face at that moment, not how you feel inside.",
@@ -53,14 +53,14 @@ def test_mandatory_notes_present():
 
 def test_expression_display_is_positive_and_complete():
     """Every product class has calm, descriptive display wording and a supportive context line."""
-    from healthvision.domain import messages as M
+    from healthvision_server.domain import messages as M
     classes = ["HAPPY", "NEUTRAL", "SAD", "SURPRISED", "ANGRY", "FEARFUL", "DISGUSTED"]
     for c in classes:
         assert M.EXPRESSION_DISPLAY[c] and M.EXPRESSION_DESCRIPTION[c] and M.EXPRESSION_CONTEXT[c]
     shown = " ".join(M.EXPRESSION_DISPLAY.values()).lower()
     for harsh in ("angry", "sad", "fear", "disgust"):
         assert harsh not in shown
-    pdf = (ROOT / "backend" / "healthvision" / "reports" / "pdf.py").read_text()
+    pdf = (ROOT / "backend" / "healthvision_server" / "reports" / "pdf.py").read_text()
     assert "limitations" in pdf
 
 
@@ -68,8 +68,8 @@ def test_no_threshold_literals_in_services_and_engines():
     """docs/02 §8 rule 1: no numeric threshold literal in comparisons outside config/tests."""
     pat = re.compile(r"(>=|<=|<|>)\s*0\.\d+")
     allowed = {"bmi_service.py", "pdf.py"}  # pdf: display rounding of >99%
-    for p in list((ROOT / "backend" / "healthvision" / "services").rglob("*.py")) + \
-             list((ROOT / "backend" / "healthvision" / "engines").rglob("*.py")):
+    for p in list((ROOT / "backend" / "healthvision_server" / "services").rglob("*.py")) + \
+             list((ROOT / "backend" / "healthvision_server" / "engines").rglob("*.py")):
         if p.name in allowed:
             continue
         for i, line in enumerate(p.read_text().splitlines(), 1):

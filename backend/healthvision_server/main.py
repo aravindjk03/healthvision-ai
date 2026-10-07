@@ -16,7 +16,7 @@ from .container import Container
 from .core.errors import ApiError
 from .core.util import uuid7
 
-log = logging.getLogger("healthvision.http")
+log = logging.getLogger("healthvision_server.http")
 
 CSP = ("default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; "
        "script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")

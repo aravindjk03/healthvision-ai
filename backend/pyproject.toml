@@ -1,5 +1,5 @@
 [project]
-name = "healthvision"
+name = "healthvision-server"
 version = "0.1.0"
 description = "HealthVision AI V1 prototype — BMI + facial expression estimate + consent-based face verification"
 requires-python = ">=3.11"
@@ -30,7 +30,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["healthvision*"]
+include = ["healthvision_server*"]
 
 [tool.setuptools.package-data]
-healthvision = ["domain/*.yaml", "reports/templates/*"]
+healthvision_server = ["domain/*.yaml", "reports/templates/*"]

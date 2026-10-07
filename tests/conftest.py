@@ -31,7 +31,7 @@ def face_fixture(name: str) -> bytes:
 
 
 def make_config(tmp: Path, **overrides) -> Path:
-    cfg = yaml.safe_load((ROOT / "config" / "healthvision.example.yaml").read_text())
+    cfg = yaml.safe_load((ROOT / "config" / "server.example.yaml").read_text())
     cfg["paths"]["data_dir"] = str(tmp / "data")
     cfg["security"]["keystore"] = "env"
     for dotted, value in overrides.items():
@@ -40,7 +40,7 @@ def make_config(tmp: Path, **overrides) -> Path:
         for k in keys[:-1]:
             node = node[k]
         node[keys[-1]] = value
-    path = tmp / "healthvision.yaml"
+    path = tmp / "server.yaml"
     path.write_text(yaml.safe_dump(cfg))
     return path
 
@@ -104,7 +104,7 @@ class Client:
 
 @pytest.fixture(scope="module")
 def app(tmp_path_factory):
-    from healthvision.main import create_app
+    from healthvision_server.main import create_app
     tmp = tmp_path_factory.mktemp("hv")
     application = create_app(str(make_config(tmp)), start_scheduler=False)
     yield application
@@ -122,7 +122,7 @@ def client(app):
 @pytest.fixture()
 def admin(client):
     with client.app.state.container.db.session() as s:
-        from healthvision.storage.orm import User
+        from healthvision_server.storage.orm import User
         exists = s.query(User).filter_by(username="admin").first() is not None
     if exists:
         client.login("admin", "a-long-test-password")

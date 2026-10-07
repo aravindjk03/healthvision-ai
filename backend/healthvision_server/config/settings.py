@@ -34,7 +34,7 @@ class ServerCfg(_Strict):
 class PathsCfg(_Strict):
     data_dir: str = "data"
     models_dir: str = "models"
-    registry_file: str = "models/registry.yaml"
+    registry_file: str = "models/server-registry.yaml"
 
 
 class FeaturesCfg(_Strict):
@@ -231,8 +231,8 @@ def load_config(path: str | os.PathLike | None = None, root: Path | None = None)
         if env:
             path = env
         else:
-            active = root / "config" / "healthvision.yaml"
-            path = active if active.exists() else root / "config" / "healthvision.example.yaml"
+            active = root / "config" / "server.yaml"
+            path = active if active.exists() else root / "config" / "server.example.yaml"
     path = Path(path)
     data = path.read_bytes()
     raw = yaml.safe_load(data)

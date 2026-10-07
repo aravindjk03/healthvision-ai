@@ -1,5 +1,5 @@
 # HealthVision AI configuration — single source of every threshold (docs/02 §8).
-# Copy to config/healthvision.yaml to customise. Values marked PROVISIONAL must be
+# Copy to config/server.yaml to customise. Values marked PROVISIONAL must be
 # tuned per docs/13_MODEL_VALIDATION.md before any production claim.
 config_schema_version: 1
 
@@ -12,7 +12,7 @@ server:
 paths:
   data_dir: data                        # SQLite DB + report PDFs (relative to repo root)
   models_dir: models
-  registry_file: models/registry.yaml
+  registry_file: models/server-registry.yaml
 
 features:
   recognition_enabled: true

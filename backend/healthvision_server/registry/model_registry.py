@@ -14,7 +14,7 @@ import yaml
 
 from ..engines.base import Engine, EngineInfo
 
-log = logging.getLogger("healthvision.registry")
+log = logging.getLogger("healthvision_server.registry")
 
 TYPE_TO_SLOT = {
     "FACE_DETECTOR": "detector",

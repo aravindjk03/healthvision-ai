@@ -87,7 +87,7 @@ def test_bmi_endpoint_and_traceability(admin):
                                                   "age_years": 34})
     j = r.json()
     assert j["result"]["bmi_display"] == "22.49" and j["result"]["category_label"] == "Normal range"
-    from healthvision.storage.orm import BmiRecord
+    from healthvision_server.storage.orm import BmiRecord
     with admin.app.state.container.db.session() as s:
         rec = s.get(BmiRecord, j["record_id"])
         assert rec.config_version == admin.app.state.container.cfg.config_version
@@ -175,7 +175,7 @@ def test_enroll_verify_revoke(admin):
     assert res["deletions"]["templates_deleted"] >= 1
     r = admin.upload("/api/v1/face/verify", face_fixture("obama2.jpg"), "b.jpg")
     assert r.status_code == 403 and r.json()["error"]["code"] == "CONSENT_REQUIRED"
-    from healthvision.storage.orm import FaceTemplate
+    from healthvision_server.storage.orm import FaceTemplate
     with admin.app.state.container.db.session() as s:
         assert s.query(FaceTemplate).count() == 0
 

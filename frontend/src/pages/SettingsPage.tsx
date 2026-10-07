@@ -105,7 +105,7 @@ export default function SettingsPage() {
 
           <section className="card">
             <h3>Thresholds (read-only)</h3>
-            <p className="muted small">Edit config/healthvision.yaml and restart to change. Active config version {cfg?.config_version}.</p>
+            <p className="muted small">Edit config/server.yaml and restart to change. Active config version {cfg?.config_version}.</p>
             <details><summary>Show active configuration</summary><pre className="code">{JSON.stringify(cfg?.settings, null, 2)}</pre></details>
           </section>
 

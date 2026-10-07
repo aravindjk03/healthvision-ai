@@ -1,4 +1,4 @@
-"""Download every model in models/registry.yaml and verify its SHA-256 (docs/10 §8).
+"""Download every model in models/server-registry.yaml and verify its SHA-256 (docs/10 §8).
 
     python tools/fetch_models.py            # download missing files
     python tools/fetch_models.py --verify   # only verify existing files

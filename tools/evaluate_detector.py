@@ -16,7 +16,7 @@ def main() -> None:
     ap.add_argument("--dataset-name", required=True)
     args = ap.parse_args()
     cfg, reg, pipe = load_registry_and_pipeline()
-    from healthvision.core.latency import LatencyRecorder
+    from healthvision_server.core.latency import LatencyRecorder
 
     def truth(n):
         return "NO_FACE" if n == 0 else "ONE_FACE" if n == 1 else "MULTIPLE_FACES"

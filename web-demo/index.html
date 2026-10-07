@@ -304,12 +304,12 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 
 <script src="lib/ort.wasm.min.js"></script>
 <script type="module">
-// ===================================================================== configuration (config/healthvision.example.yaml)
+// ===================================================================== configuration (config/server.example.yaml)
 const CFG = {"bmi": {"reference": "WHO_ADULT_2000", "adult_min_age": 18, "height_cm": {"min": 50, "max": 272}, "weight_kg": {"min": 2, "max": 635}, "plausibility_warning": {"bmi_min": 10, "bmi_max": 80}}, "face_detection": {"face_detection_threshold": 0.8, "nms_threshold": 0.3, "max_faces_considered": 10, "min_secondary_face_confidence": 0.6, "candidate_floor": 0.5}, "quality": {"min_image_short_side_px": 480, "minimum_face_size_px": 112, "brightness_threshold": {"min_mean": 60, "max_mean": 200}, "blur_threshold": {"laplacian_var_good": 120, "laplacian_var_min": 60}, "global_blur_min": 20, "pose_max_deg": {"yaw_good": 15, "yaw_max": 30, "pitch_good": 15, "pitch_max": 25, "roll_max": 25}, "occlusion": {"min_landmark_visibility": 0.8}}, "expression": {"classes": ["HAPPY", "NEUTRAL", "SAD", "SURPRISED", "ANGRY", "FEARFUL", "DISGUSTED"], "class_map": {"happiness": "HAPPY", "neutral": "NEUTRAL", "sadness": "SAD", "surprise": "SURPRISED", "anger": "ANGRY", "fear": "FEARFUL", "disgust": "DISGUSTED", "contempt": null}, "renormalize_after_exclusion": true, "max_excluded_mass": 0.5, "expression_confidence_threshold": {"high": 0.85, "moderate": 0.6}, "min_top2_margin": 0.15, "temperature": 1.0}, "recognition": {"recognition_threshold": 0.4, "no_match_threshold": 0.3, "enrollment_min": 1, "enrollment_max": 5}};
 const WHO_ADULT = [["UNDERWEIGHT","Underweight",null,18.5],["NORMAL","Normal range",18.5,25],["OVERWEIGHT","Overweight (pre-obese)",25,30],["OBESE_I","Obese class I",30,35],["OBESE_II","Obese class II",35,40],["OBESE_III","Obese class III",40,null]];
 const MAX_UPLOAD = 10 * 1024 * 1024, MAX_SIDE = 4096;
 
-// ===================================================================== wording (backend/healthvision/domain/messages.py)
+// ===================================================================== wording (backend/healthvision_server/domain/messages.py)
 const M = {
   EXPR_NOTE: "This is an AI estimate of the visible facial expression in one photo. It describes the face at that moment, not how you feel inside.",
   CONF_LABEL: "model confidence in the visible expression",
@@ -389,7 +389,7 @@ function gate(purpose, el, body) {
 function renderGates() { gate("BMI", "bmi-gate", "bmi-body"); gate("FACE_ANALYSIS", "face-gate", "face-body"); gate("RECOGNITION", "verify-gate", "verify-body"); }
 $("consent-next").addEventListener("click", () => showTab("bmi"));
 
-// ===================================================================== BMI (backend/healthvision/services/bmi_service.py)
+// ===================================================================== BMI (backend/healthvision_server/services/bmi_service.py)
 const num = (v) => { if (v === null || v === undefined || String(v).trim() === "") return undefined; const n = Number(String(v).trim()); return Number.isFinite(n) ? n : NaN; };
 const round2 = (x) => (Math.round((x + Number.EPSILON) * 100) / 100).toFixed(2);
 function calcBmi({ hUnit, h, ft, inch, w, wUnit, age }) {

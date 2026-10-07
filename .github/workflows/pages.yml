@@ -8,7 +8,7 @@ name: Deploy web demo to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["web-demo/**", "models/registry.yaml", "tools/fetch_models.py", ".github/workflows/pages.yml"]
+    paths: ["web-demo/**", "models/server-registry.yaml", "tools/fetch_models.py", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:

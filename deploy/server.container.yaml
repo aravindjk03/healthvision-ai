@@ -1,5 +1,5 @@
 # Container configuration: listens on all interfaces inside the container and reads the
-# template key from the HEALTHVISION_KEK secret. Everything else matches healthvision.example.yaml.
+# template key from the HEALTHVISION_KEK secret. Everything else matches server.example.yaml.
 config_schema_version: 1
 server:
   host: 0.0.0.0
@@ -9,7 +9,7 @@ server:
 paths:
   data_dir: data
   models_dir: models
-  registry_file: models/registry.yaml
+  registry_file: models/server-registry.yaml
 features:
   recognition_enabled: true
   identification_enabled: false

@@ -14,11 +14,11 @@ sys.path.insert(0, str(ROOT / "backend"))
 
 
 def load_registry_and_pipeline(config: str | None = None):
-    from healthvision.config.settings import load_config
-    from healthvision.container import ENGINE_IDS
-    from healthvision.registry.model_registry import ModelRegistry
-    from healthvision.services.face_pipeline import FacePipeline
-    from healthvision.services.face_quality_service import FaceQualityService
+    from healthvision_server.config.settings import load_config
+    from healthvision_server.container import ENGINE_IDS
+    from healthvision_server.registry.model_registry import ModelRegistry
+    from healthvision_server.services.face_pipeline import FacePipeline
+    from healthvision_server.services.face_quality_service import FaceQualityService
 
     cfg = load_config(config)
     s = cfg.settings

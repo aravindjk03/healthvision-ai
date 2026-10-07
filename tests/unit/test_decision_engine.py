@@ -2,10 +2,10 @@
 import yaml
 
 from conftest import ROOT
-from healthvision.config.settings import Settings
-from healthvision.services import decision_engine as DE
+from healthvision_server.config.settings import Settings
+from healthvision_server.services import decision_engine as DE
 
-S = Settings.model_validate(yaml.safe_load((ROOT / "config" / "healthvision.example.yaml").read_text()))
+S = Settings.model_validate(yaml.safe_load((ROOT / "config" / "server.example.yaml").read_text()))
 E, FD = S.expression, S.face_detection
 
 

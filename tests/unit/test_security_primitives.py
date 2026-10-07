@@ -7,12 +7,12 @@ import yaml
 from sqlalchemy import text
 
 from conftest import ROOT
-from healthvision.config.settings import Settings
-from healthvision.services.audit_service import AuditService
-from healthvision.storage.crypto import EnvelopeCipher
-from healthvision.storage.db import Database
-from healthvision.storage.orm import FaceEnrollment, FaceTemplate, User, UserConsent
-from healthvision.storage.template_store import TemplateStore
+from healthvision_server.config.settings import Settings
+from healthvision_server.services.audit_service import AuditService
+from healthvision_server.storage.crypto import EnvelopeCipher
+from healthvision_server.storage.db import Database
+from healthvision_server.storage.orm import FaceEnrollment, FaceTemplate, User, UserConsent
+from healthvision_server.storage.template_store import TemplateStore
 
 
 def test_envelope_roundtrip_and_aad():
@@ -92,7 +92,7 @@ def test_audit_rejects_biometric_keys(db):
 
 
 def _cfg():
-    return yaml.safe_load((ROOT / "config" / "healthvision.example.yaml").read_text())
+    return yaml.safe_load((ROOT / "config" / "server.example.yaml").read_text())
 
 
 def test_config_rejects_log_images():

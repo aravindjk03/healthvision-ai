@@ -16,14 +16,14 @@ WORKDIR /app
 COPY backend/ backend/
 RUN pip install --no-cache-dir ./backend
 COPY config/ config/
-COPY models/registry.yaml models/registry.yaml
+COPY models/server-registry.yaml models/server-registry.yaml
 COPY tools/ tools/
 RUN python tools/fetch_models.py
 COPY --from=web /src/frontend/dist frontend/dist
-COPY deploy/healthvision.container.yaml config/healthvision.yaml
+COPY deploy/server.container.yaml config/server.yaml
 RUN useradd --create-home hv && mkdir -p /app/data && chown -R hv /app/data
 USER hv
 VOLUME ["/app/data"]
 EXPOSE 8600
 # HEALTHVISION_KEK (base64, 32 bytes) must be supplied as a secret — see README.
-CMD ["python", "-m", "healthvision.main"]
+CMD ["python", "-m", "healthvision_server.main"]
