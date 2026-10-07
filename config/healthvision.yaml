@@ -1,0 +1,83 @@
+# HealthVision AI — single source of thresholds (docs/02 §8).
+# Values marked PROVISIONAL must be tuned per docs/13_MODEL_VALIDATION.md.
+config_schema_version: 1
+
+privacy:
+  policy_version: "privacy-1.0"
+  delete_on_revoke: true
+
+features:
+  recognition_enabled: true
+  identification_enabled: false        # 1:N gallery search (V2)
+  liveness_enabled: false              # no validated liveness model in V1
+  store_raw_images: false              # fixed in V1
+
+upload:
+  max_upload_bytes: 10485760
+  max_image_side_px: 4096
+  working_max_side_px: 1280
+
+bmi:
+  reference: WHO_ADULT_2000            # WHO_ADULT_2000 | WHO_ASIAN_2004
+  adult_min_age: 18
+  height_cm: {min: 50, max: 272}
+  weight_kg: {min: 2, max: 635}
+  plausibility_warning: {bmi_min: 10, bmi_max: 80}
+
+face_detection:
+  engine: yunet
+  face_detection_threshold: 0.80        # PROVISIONAL
+  min_secondary_face_confidence: 0.60   # faces above this count toward MULTIPLE_FACES
+  nms_threshold: 0.30
+  max_faces_considered: 10
+
+landmarks:
+  engine: mediapipe                     # mediapipe | fivepoint (fallback)
+  crop_padding: 0.25
+
+quality:
+  min_image_short_side_px: 480
+  good_image_short_side_px: 720
+  minimum_face_size_px: 112             # PROVISIONAL
+  brightness_threshold: {min_mean: 60, max_mean: 200, good_margin: 20}   # PROVISIONAL
+  contrast_threshold: {good: 40, min: 25}                                # PROVISIONAL
+  blur_threshold: {laplacian_var_good: 120, laplacian_var_min: 60}       # PROVISIONAL
+  pose_max_deg: {yaw_good: 15, yaw_max: 30, pitch_good: 15, pitch_max: 25, roll_good: 15, roll_max: 25}
+  visibility: {bbox_inside_good: 0.95, bbox_inside_min: 0.90}
+  occlusion: {min_landmark_visibility: 0.80, good_landmark_visibility: 0.95}
+
+expression:
+  engine: ferplus
+  classes: [HAPPY, NEUTRAL, SAD, SURPRISED, ANGRY, FEARFUL, DISGUSTED]
+  class_map:                            # model label -> product class (null = excluded)
+    happiness: HAPPY
+    neutral: NEUTRAL
+    sadness: SAD
+    surprise: SURPRISED
+    anger: ANGRY
+    fear: FEARFUL
+    disgust: DISGUSTED
+    contempt: null
+  renormalize_after_exclusion: true
+  max_excluded_mass: 0.5
+  expression_confidence_threshold:
+    high: 0.85
+    moderate: 0.60                      # below this => UNCERTAIN
+  min_top2_margin: 0.15                 # PROVISIONAL
+  temperature: 1.0                      # set by calibration (docs/13 §3.3)
+
+recognition:
+  engine: sface
+  calibration_file: models/calibration/sface_2021dec.json   # absent => DEMO-UNCALIBRATED mode
+  demo_uncalibrated_thresholds:         # used ONLY when calibration file absent; labelled in UI
+    recognition_threshold: 0.363        # vendor reference value (OpenCV Zoo SFace cosine), NOT locally calibrated
+    no_match_threshold: 0.30
+  enrollment_frames: {min: 1, recommended: 3, max: 5}
+  enrollment_min_quality: GOOD          # GOOD | ACCEPTABLE
+  verification_min_quality: ACCEPTABLE
+  rate_limit: {per_minute: 5, per_hour: 30}
+  lockout_after_consecutive_no_match: 10
+  lockout_minutes: 15
+
+retention:
+  mode: browser_session                 # hosted demo: nothing persists beyond the browser session

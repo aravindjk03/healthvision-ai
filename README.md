@@ -2,10 +2,51 @@
 
 **BMI + Facial Expression Estimation + Consent-Based Face Verification**
 
-> **Status: PLANNING PHASE — no application code exists yet.**
-> This repository contains the complete architecture and implementation plan.
-> It is written so that a separate coding agent can implement V1 without
-> making major architectural decisions.
+> **Status: V1 prototype implemented as a Streamlit app** (`streamlit_app.py` + `healthvision/` package),
+> built from the architecture plan in [docs/](docs/). Not production-ready — see the readiness gate in
+> [docs/14_PRODUCTION_ROADMAP.md](docs/14_PRODUCTION_ROADMAP.md) and Settings → readiness in the app.
+
+## Run it
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+On first start the app downloads the four model files listed in [models/registry.yaml](models/registry.yaml)
+(~78 MB) and verifies each SHA-256 before loading it. Tests: `pip install -r requirements-dev.txt && pytest`.
+
+### Deploy on Streamlit Community Cloud
+
+1. https://share.streamlit.io → **Create app** → repo `aravindjk03/healthvision-ai`, branch `main`, file `streamlit_app.py`.
+2. **Advanced settings → Python 3.12** (the version it was tested on).
+3. Deploy. `packages.txt` installs the system libraries OpenCV needs; `requirements.txt` the Python packages.
+
+## What is implemented (V1)
+
+| Component | Implementation |
+|---|---|
+| UI | Streamlit pages: Home, BMI, Face Analysis, Face Recognition, Dashboard, History, Reports, Privacy, Settings, Documentation |
+| Service layer | `healthvision/app.py` facade → `services/` (BMI, consent, face analysis, quality, decision engine, recognition, report, audit) |
+| Model A — BMI | Deterministic formula, WHO adult reference (configurable), pediatric guard, unit conversion |
+| Model B — detector | YuNet (OpenCV Zoo) |
+| Model C — landmarks | MediaPipe Face Landmarker (478 pts, head pose from transform matrix); five-point fallback |
+| Model D — expression | FER+ ONNX; configurable classes; HIGH / MODERATE / UNCERTAIN / NOT_AVAILABLE |
+| Model E — embedding | SFace (OpenCV Zoo), cosine similarity, MATCH / NO_MATCH / UNCERTAIN |
+| Model F — liveness | **Not implemented** — always `NOT_PERFORMED`, disclosed everywhere |
+| Thresholds | All in [config/healthvision.yaml](config/healthvision.yaml); every result carries `config_version` + decision trace |
+| Privacy | Three independent consents, revocation-triggered deletion, AES-256-GCM envelope-encrypted templates, crypto-shredding, export, delete-all |
+| Audit | Hash-chained, rejects biometric fields |
+
+### Deviations from the plan (hosted-demo constraints)
+
+| Plan (docs) | Hosted V1 | Why |
+|---|---|---|
+| FastAPI backend + React SPA | Streamlit UI calling the same service layer in-process | Single-file deployment on Streamlit Community Cloud |
+| SQLite with retention jobs | In-memory store per browser session; nothing written to disk | Public demo should not accumulate biometric or health data |
+| KEK in OS keystore | Random KEK per browser session | No OS keystore on the hosting platform |
+| Inference on the user's device | Inference on the Streamlit server; images processed in memory and discarded | Hosting model; disclosed in the app sidebar. Run locally for on-device processing |
+| Recognition thresholds calibrated | Demo thresholds (vendor reference 0.363 cosine), labelled DEMO — UNCALIBRATED | No local validation set yet (docs/13) |
 
 ---
 
