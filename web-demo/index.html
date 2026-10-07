@@ -1,0 +1,889 @@
+<title>HealthVision AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: clinical single-column workspace, tabs across the top, results set beside inputs on wide screens. */
+:root {
+  --bg: #f2f5f5; --surface: #ffffff; --sunk: #e9efef; --ink: #14242a; --muted: #4f6168; --line: #d3dedf;
+  --accent: #0d6b66; --accent-ink: #ffffff; --accent-soft: #dff0ee;
+  --calc: #23559e; --calc-soft: #e5edf9; --ai: #6e46a8; --ai-soft: #efe9f8; --id: #8c5300; --id-soft: #fbf0dc;
+  --good: #1b7537; --good-soft: #e1f3e6; --warn: #845700; --warn-soft: #fbf1d6; --bad: #ad2a22; --bad-soft: #fae6e3;
+  --font-ui: "Public Sans", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1517; --surface: #162125; --sunk: #1d2a2f; --ink: #e4eef0; --muted: #9db1b7; --line: #2a3a40;
+  --accent: #46b9b1; --accent-ink: #06201e; --accent-soft: #123331;
+  --calc: #8fb5ff; --calc-soft: #19283f; --ai: #c6a7f0; --ai-soft: #2a2140; --id: #f1b65d; --id-soft: #382a12;
+  --good: #73d494; --good-soft: #12301c; --warn: #f1c35d; --warn-soft: #362a0d; --bad: #ff8c82; --bad-soft: #3b1714;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e1517; --surface: #162125; --sunk: #1d2a2f; --ink: #e4eef0; --muted: #9db1b7; --line: #2a3a40;
+  --accent: #46b9b1; --accent-ink: #06201e; --accent-soft: #123331;
+  --calc: #8fb5ff; --calc-soft: #19283f; --ai: #c6a7f0; --ai-soft: #2a2140; --id: #f1b65d; --id-soft: #382a12;
+  --good: #73d494; --good-soft: #12301c; --warn: #f1c35d; --warn-soft: #362a0d; --bad: #ff8c82; --bad-soft: #3b1714;
+  color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 40px; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h2 { font-size: 1.35rem; } h3 { font-size: 1.05rem; }
+p { margin: 0; }
+.muted { color: var(--muted); } .small { font-size: .84rem; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.grid2 > *, .three > * { min-width: 0; }
+.three { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; align-items: start; }
+
+header.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding-block: 4px 14px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .08em; color: var(--accent); }
+.brand svg { flex: none; }
+.pill { font-size: .72rem; font-weight: 700; letter-spacing: .03em; padding: 2px 9px; border-radius: 99px; }
+.pill.proto { background: var(--warn-soft); color: var(--warn); }
+.pill.local { background: var(--accent-soft); color: var(--accent); }
+.lead { max-width: 70ch; color: var(--muted); }
+
+nav.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); margin-block: 14px 18px; }
+nav.tabs button { font: inherit; font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: none; border: 0; color: var(--muted); padding: 10px 12px; border-bottom: 3px solid transparent; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+nav.tabs button:hover { color: var(--ink); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.kicker { font-size: .7rem; font-weight: 800; letter-spacing: .14em; }
+.k-calc { color: var(--calc); } .k-ai { color: var(--ai); } .k-id { color: var(--id); }
+.panel { border-top: 4px solid var(--line); }
+.panel.calc { border-top-color: var(--calc); } .panel.ai { border-top-color: var(--ai); } .panel.id { border-top-color: var(--id); }
+
+label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: .88rem; }
+.inline { display: flex; gap: 8px; flex-wrap: wrap; }
+.inline > * { flex: 1 1 90px; min-width: 0; }
+.inline select { flex: 0 0 auto; }
+input, select { font: inherit; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: 100%; }
+select { width: auto; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+.btn { font: inherit; font-weight: 700; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--accent); }
+.btn.danger { color: var(--bad); }
+.ferr { color: var(--bad); font-size: .84rem; font-weight: 500; }
+
+.badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: .76rem; font-weight: 800; letter-spacing: .03em; }
+.b-good { background: var(--good-soft); color: var(--good); } .b-warn { background: var(--warn-soft); color: var(--warn); }
+.b-bad { background: var(--bad-soft); color: var(--bad); } .b-info { background: var(--calc-soft); color: var(--calc); }
+.b-neutral { background: var(--sunk); color: var(--muted); }
+.note { padding: 10px 12px; border-radius: 8px; font-weight: 500; }
+.n-warn { background: var(--warn-soft); color: var(--warn); } .n-good { background: var(--good-soft); color: var(--good); }
+.n-bad { background: var(--bad-soft); color: var(--bad); } .n-info { background: var(--calc-soft); color: var(--calc); }
+.n-demo { background: var(--id-soft); color: var(--id); border: 1px dashed var(--id); font-weight: 600; }
+
+.consent { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.consent .card { display: flex; flex-direction: column; gap: 10px; }
+.consent .state { font-weight: 700; font-size: .85rem; }
+
+.drop { border: 2px dashed var(--line); border-radius: 10px; padding: 26px 14px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; cursor: pointer; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.cam-btn { align-self: flex-start; }
+.cam-dialog { position: fixed; inset: 0; background: color-mix(in srgb, #000 70%, transparent); display: grid; place-items: center; padding: 16px; z-index: 10; }
+.cam-box { background: var(--surface); border-radius: var(--radius); padding: 16px; width: min(720px, 100%); display: flex; flex-direction: column; gap: 12px; }
+.cam-view { position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; max-width: 100%; }
+.cam-view video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+.cam-view svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cam-view ellipse { fill: none; stroke: #fff; stroke-opacity: .85; stroke-width: .6; stroke-dasharray: 2 1.4; vector-effect: non-scaling-stroke; }
+.cam-guide { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #fff; font-weight: 600; text-shadow: 0 1px 3px #000; }
+.drop input { display: none; }
+.preview { position: relative; border-radius: 10px; overflow: hidden; background: var(--sunk); }
+.preview canvas { display: block; width: 100%; height: auto; }
+
+.bmi-big { font-size: 3rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.bmi-big small { font-size: 1rem; color: var(--muted); font-weight: 600; letter-spacing: 0; }
+.bmi-big.grey { color: var(--muted); }
+dl.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; margin: 0; }
+dl.kv dt { color: var(--muted); font-weight: 600; } dl.kv dd { margin: 0; }
+
+.field { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; padding-block: 8px; border-bottom: 1px solid var(--line); }
+.field > :first-child { color: var(--muted); font-weight: 600; font-size: .88rem; }
+.checks { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; font-size: .86rem; }
+.checks li { display: flex; gap: 8px; align-items: center; }
+.checks .badge { min-width: 96px; text-align: center; font-size: .66rem; }
+
+.expr { background: var(--ai-soft); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.expr-main { font-size: 1.25rem; font-weight: 800; }
+.expr .context { background: var(--good-soft); color: var(--good); padding: 8px 10px; border-radius: 8px; font-weight: 500; }
+.bars { display: grid; gap: 3px; }
+.bar-row { display: grid; grid-template-columns: 104px minmax(0, 1fr) 46px; gap: 8px; align-items: center; font-size: .82rem; }
+.bar { height: 8px; background: color-mix(in srgb, var(--ai) 15%, var(--surface)); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--ai); border-radius: 99px; }
+.bar-val { text-align: right; color: var(--muted); font-family: var(--font-num); font-size: .78rem; }
+.lat { display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: .78rem; color: var(--muted); }
+.lat span { background: var(--sunk); padding: 1px 7px; border-radius: 6px; font-family: var(--font-num); }
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.thumbs figure { margin: 0; display: flex; flex-direction: column; gap: 3px; align-items: center; font-size: .74rem; }
+.thumbs canvas { width: 96px; height: 96px; border-radius: 8px; border: 1px solid var(--line); object-fit: cover; }
+.verdict { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-weight: 700; font-size: 1.05rem; }
+
+.status { display: grid; gap: 6px; font-size: .86rem; }
+.status div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); padding-block: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+td, th { text-align: left; border-bottom: 1px solid var(--line); padding: 7px 8px; vertical-align: top; }
+th { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+.table-wrap { overflow-x: auto; }
+footer.foot { margin-top: 28px; text-align: center; color: var(--muted); font-size: .82rem; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 560px) { .field { grid-template-columns: 1fr; gap: 2px; } .bmi-big { font-size: 2.4rem; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="8" fill="currentColor"/><circle cx="16" cy="14" r="6" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M8 26c2-4 5-6 8-6s6 2 8 6" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <span>HEALTHVISION AI</span>
+    </div>
+    <div class="row"><span class="pill local">Runs in your browser</span><span class="pill proto">V1 prototype</span></div>
+  </header>
+  <p class="lead">BMI calculation, a visible facial-expression estimate and consent-based face verification, each a separate, explainable measurement. Everything runs on this device: your photos are never uploaded anywhere.</p>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-consent" aria-selected="true" data-tab="consent">Consent</button>
+    <button role="tab" id="tab-bmi" aria-selected="false" data-tab="bmi">BMI</button>
+    <button role="tab" id="tab-face" aria-selected="false" data-tab="face">Face analysis</button>
+    <button role="tab" id="tab-verify" aria-selected="false" data-tab="verify">Face verification</button>
+    <button role="tab" id="tab-dash" aria-selected="false" data-tab="dash">Dashboard</button>
+    <button role="tab" id="tab-about" aria-selected="false" data-tab="about">About</button>
+  </nav>
+
+  <!-- CONSENT -->
+  <section data-panel="consent" class="stack">
+    <h2>Consent</h2>
+    <p class="muted">Each use has its own consent. Saying no to one does not affect the others. You can change these at any time.</p>
+    <div class="consent" id="consent-cards"></div>
+    <div class="row"><button class="btn primary" id="consent-next">Continue to BMI</button></div>
+  </section>
+
+  <!-- BMI -->
+  <section data-panel="bmi" class="stack" hidden>
+    <h2>BMI analysis</h2>
+    <div id="bmi-gate"></div>
+    <div class="grid2" id="bmi-body">
+      <form class="card stack" id="bmi-form" novalidate>
+        <label for="h-cm">Height
+          <div class="inline">
+            <input id="h-cm" inputmode="decimal" placeholder="170" value="170">
+            <input id="h-ft" inputmode="numeric" placeholder="ft" hidden aria-label="Feet">
+            <input id="h-in" inputmode="decimal" placeholder="in" hidden aria-label="Inches">
+            <select id="h-unit" aria-label="Height unit"><option value="cm">cm</option><option value="ft_in">ft + in</option></select>
+          </div>
+          <span class="ferr" id="err-height"></span>
+        </label>
+        <label for="w-val">Weight
+          <div class="inline">
+            <input id="w-val" inputmode="decimal" placeholder="65" value="65">
+            <select id="w-unit" aria-label="Weight unit"><option value="kg">kg</option><option value="lb">lb</option></select>
+          </div>
+          <span class="ferr" id="err-weight"></span>
+        </label>
+        <div class="inline">
+          <label for="age">Age (optional)<input id="age" inputmode="numeric" placeholder="years" value="34"><span class="ferr" id="err-age"></span></label>
+          <label for="sex">Sex (optional)<select id="sex"><option value="unspecified">Prefer not to say</option><option value="female">Female</option><option value="male">Male</option></select></label>
+        </div>
+        <p class="muted small">Adult BMI categories do not depend on sex.</p>
+        <div class="row"><button class="btn primary" type="submit">Calculate BMI</button></div>
+      </form>
+      <section class="card panel calc stack" aria-live="polite" id="bmi-result">
+        <span class="kicker k-calc">CALCULATED</span>
+        <p class="muted">Enter height and weight, then calculate.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- FACE -->
+  <section data-panel="face" class="stack" hidden>
+    <h2>Face analysis</h2>
+    <div id="face-gate"></div>
+    <div class="grid2" id="face-body">
+      <section class="card stack">
+        <label class="drop" id="face-drop" for="face-file">
+          <input type="file" id="face-file" accept="image/jpeg,image/png">
+          <strong>Choose a photo with one face</strong>
+          <span class="muted small">JPEG or PNG, up to 10 MB. Face the camera in soft, even light. The photo stays on this device.</span>
+        </label>
+        <button class="btn cam-btn" type="button" data-camera="face">Use camera</button>
+        <div class="preview" id="face-preview" hidden><canvas id="face-canvas"></canvas></div>
+      </section>
+      <section class="card panel ai stack" aria-live="polite" id="face-result">
+        <span class="kicker k-ai">AI ESTIMATES</span>
+        <p class="muted">Choose a photo to start. The first analysis takes a few seconds while the AI models load.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- VERIFY -->
+  <section data-panel="verify" class="stack" hidden>
+    <h2>Face verification</h2>
+    <div class="note n-warn">Liveness detection is not implemented in this version. Verification can be fooled by photos or screens. Do not use it for security decisions.</div>
+    <div class="note n-demo">Demo mode — recognition threshold not calibrated on validation data</div>
+    <div id="verify-gate"></div>
+    <div class="grid2" id="verify-body">
+      <section class="card stack">
+        <span class="kicker k-id">STEP 1 · ENROLL</span>
+        <h3>Enroll your face</h3>
+        <p class="muted small">Add 1–5 clear photos of yourself (3 recommended). Only a face template (a list of numbers) is kept, in this tab's memory. It is cleared when you close or reload the page.</p>
+        <label class="drop" id="enroll-drop" for="enroll-file"><input type="file" id="enroll-file" accept="image/jpeg,image/png" multiple><strong>Choose enrollment photos</strong><span class="muted small">Each photo needs GOOD quality and one face.</span></label>
+        <button class="btn cam-btn" type="button" data-camera="enroll">Use camera (adds one photo at a time)</button>
+        <div class="thumbs" id="enroll-thumbs"></div>
+        <div id="enroll-msg"></div>
+        <div class="row"><button class="btn danger" id="enroll-clear" hidden>Delete my face template</button></div>
+      </section>
+      <section class="card panel id stack" aria-live="polite">
+        <span class="kicker k-id">STEP 2 · VERIFY</span>
+        <h3>Verify my identity</h3>
+        <label class="drop" id="verify-drop" for="verify-file"><input type="file" id="verify-file" accept="image/jpeg,image/png" disabled><strong>Choose a photo to verify</strong><span class="muted small" id="verify-hint">Enroll first.</span></label>
+        <button class="btn cam-btn" type="button" data-camera="verify" disabled>Use camera</button>
+        <div id="verify-result"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section data-panel="dash" class="stack" hidden>
+    <h2>Results dashboard</h2>
+    <div class="three" id="dash"></div>
+    <section class="card stack" id="dash-notes"></section>
+  </section>
+
+  <!-- ABOUT -->
+  <section data-panel="about" class="stack" hidden>
+    <h2>About this version</h2>
+    <div class="grid2">
+      <section class="card stack">
+        <h3>AI models on this device</h3>
+        <div class="status" id="model-status"></div>
+        <button class="btn" id="load-models">Load models now</button>
+        <p class="muted small">YuNet (MIT), MediaPipe Face Landmarker (Apache-2.0), FER+ (MIT) and SFace (Apache-2.0) are the same model files as the full HealthVision AI app, run here with ONNX Runtime Web and MediaPipe in your browser.</p>
+      </section>
+      <section class="card stack">
+        <h3>Production readiness gate <span class="badge b-bad">NOT MET</span></h3>
+        <ul class="plain small">
+          <li>Models are not yet validated on local, consented data.</li>
+          <li>Fairness across skin tones, ages and lighting is not yet evaluated.</li>
+          <li>Recognition thresholds are demo values, not calibrated.</li>
+          <li>Liveness (photo or screen spoof detection) is not implemented.</li>
+          <li>No security, privacy or clinical review has taken place yet.</li>
+        </ul>
+        <h3>Differences from the full app</h3>
+        <ul class="plain small">
+          <li>Camera works when this page is opened as a normal website (for example GitHub Pages). Inside an embedded viewer the camera may be blocked; use photo upload there.</li>
+          <li>No accounts, history, PDF reports or audit log. Results live in this tab and disappear on reload.</li>
+          <li>The detector runs on a 640×640 letterboxed copy of your photo, so boxes can differ by a few pixels from the full app.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <div class="cam-dialog" id="cam-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="cam-title">
+    <div class="cam-box">
+      <h3 id="cam-title">Camera</h3>
+      <div class="cam-view"><video id="cam-video" muted playsinline></video>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="48" rx="20" ry="34"/></svg>
+        <div class="cam-guide">Position one face inside the frame.</div></div>
+      <p class="note n-bad" id="cam-error" hidden></p>
+      <div class="row"><button class="btn primary" id="cam-capture" disabled>Capture</button><button class="btn" id="cam-cancel">Cancel</button>
+        <span class="muted small">The live preview stays in your browser. Nothing is sent anywhere.</span></div>
+    </div>
+  </div>
+
+  <footer class="foot">These are separate measurements to help you reflect — not a medical diagnosis or a reading of how you feel.</footer>
+</div>
+
+<script src="lib/ort.wasm.min.js"></script>
+<script type="module">
+// ===================================================================== configuration (config/server.example.yaml)
+const CFG = {"bmi": {"reference": "WHO_ADULT_2000", "adult_min_age": 18, "height_cm": {"min": 50, "max": 272}, "weight_kg": {"min": 2, "max": 635}, "plausibility_warning": {"bmi_min": 10, "bmi_max": 80}}, "face_detection": {"face_detection_threshold": 0.8, "nms_threshold": 0.3, "max_faces_considered": 10, "min_secondary_face_confidence": 0.6, "candidate_floor": 0.5}, "quality": {"min_image_short_side_px": 480, "minimum_face_size_px": 112, "brightness_threshold": {"min_mean": 60, "max_mean": 200}, "blur_threshold": {"laplacian_var_good": 120, "laplacian_var_min": 60}, "global_blur_min": 20, "pose_max_deg": {"yaw_good": 15, "yaw_max": 30, "pitch_good": 15, "pitch_max": 25, "roll_max": 25}, "occlusion": {"min_landmark_visibility": 0.8}}, "expression": {"classes": ["HAPPY", "NEUTRAL", "SAD", "SURPRISED", "ANGRY", "FEARFUL", "DISGUSTED"], "class_map": {"happiness": "HAPPY", "neutral": "NEUTRAL", "sadness": "SAD", "surprise": "SURPRISED", "anger": "ANGRY", "fear": "FEARFUL", "disgust": "DISGUSTED", "contempt": null}, "renormalize_after_exclusion": true, "max_excluded_mass": 0.5, "expression_confidence_threshold": {"high": 0.85, "moderate": 0.6}, "min_top2_margin": 0.15, "temperature": 1.0}, "recognition": {"recognition_threshold": 0.4, "no_match_threshold": 0.3, "enrollment_min": 1, "enrollment_max": 5}};
+const WHO_ADULT = [["UNDERWEIGHT","Underweight",null,18.5],["NORMAL","Normal range",18.5,25],["OVERWEIGHT","Overweight (pre-obese)",25,30],["OBESE_I","Obese class I",30,35],["OBESE_II","Obese class II",35,40],["OBESE_III","Obese class III",40,null]];
+const MAX_UPLOAD = 10 * 1024 * 1024, MAX_SIDE = 4096;
+
+// ===================================================================== wording (backend/healthvision_server/domain/messages.py)
+const M = {
+  EXPR_NOTE: "This is an AI estimate of the visible facial expression in one photo. It describes the face at that moment, not how you feel inside.",
+  CONF_LABEL: "model confidence in the visible expression",
+  UNCERTAIN: "We need a clearer view to estimate the expression — try facing the camera in soft, even light.",
+  DISPLAY: { HAPPY: "Smiling", NEUTRAL: "Calm / neutral", SURPRISED: "Surprised", SAD: "Downcast", ANGRY: "Frowning", FEARFUL: "Wide-eyed", DISGUSTED: "Nose wrinkled" },
+  DESC: { HAPPY: "a warm smile", NEUTRAL: "a calm, relaxed expression", SURPRISED: "raised brows and an open expression", SAD: "a softer, downturned expression", ANGRY: "lowered, drawn-together brows", FEARFUL: "widened eyes", DISGUSTED: "a wrinkled nose" },
+  CONTEXT: (c) => ({ HAPPY: "A lovely, bright expression in this photo.", NEUTRAL: "A calm, steady expression in this photo.", SURPRISED: "An open, attentive expression in this photo." }[c]
+    || "Faces change from moment to moment — this captures just one instant, and it says nothing about who you are or how your day is going. Feel free to try another photo anytime."),
+  BMI_LIMIT: "BMI is a screening measure, not a medical diagnosis. It works best alongside other measures, because it does not separate muscle from fat or show where body fat is carried.",
+  BMI_NOTE: "BMI is a helpful screening number; a healthcare professional can put it in full context for you.",
+  BMI_GUIDE: { UNDERWEIGHT: "Your BMI is below the WHO adult normal range. A healthcare professional can help you understand what this means for you.",
+    NORMAL: "Great — your BMI is within the WHO adult normal range.",
+    OVERWEIGHT: "Your BMI is a little above the WHO adult normal range. BMI is only one number — a healthcare professional can help you see the full picture." },
+  BMI_GUIDE_HIGH: "Your BMI is above the WHO adult normal range. BMI is only one number — a healthcare professional can help you see the full picture and any next steps.",
+  BMI_PEDIATRIC: "For people under 18, BMI is read using age-specific growth charts (WHO/CDC BMI-for-age percentiles), so adult categories are not shown. This version shows the number only.",
+  NO_FACE: "Let's try again — make sure your face is inside the frame.",
+  MULTI: "Multiple faces detected. Please make sure only one person is in the frame.",
+  POOR: (r) => `Almost there — ${r}. Please choose another photo.`,
+  ALIGN: "Nearly there — please face the camera directly and try another photo.",
+  FOOTER: "These are separate measurements to help you reflect — not a medical diagnosis or a reading of how you feel.",
+  VERIFY: { MATCH: "Verified — matches your enrolled identity", NO_MATCH: "Not verified — this photo does not match your enrolled identity", UNCERTAIN: "Almost — the result is borderline. Please retry facing the camera in good light." },
+};
+const CONSENTS = {
+  BMI: { title: "BMI calculation", text: "Uses the height, weight and optional age and sex you enter, only in this browser tab. BMI is a screening measure, not a medical diagnosis." },
+  FACE_ANALYSIS: { title: "Facial expression analysis", text: "Analyses a photo you choose, on this device only. The photo is never uploaded or stored. The expression is an AI estimate of the visible face, not a measure of how you feel." },
+  RECOGNITION: { title: "Facial recognition (biometric)", text: "Facial recognition uses biometric information to verify or identify an enrolled person. Here it only checks you against your own enrollment. The template is kept in this tab's memory and cleared on reload. Liveness detection is not implemented in this version." },
+};
+
+// ===================================================================== state
+const S = { consent: { BMI: null, FACE_ANALYSIS: null, RECOGNITION: null }, bmi: null, face: null, verify: null, templates: [] };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = (x) => (x >= 0.995 ? ">99%" : x > 0 && x < 0.005 ? "<1%" : `${Math.round(x * 100)}%`);
+const badge = (kind, text) => `<span class="badge b-${kind}">${esc(text)}</span>`;
+const gradeKind = (g) => (g === "GOOD" ? "good" : g === "ACCEPTABLE" ? "warn" : g === "POOR" ? "bad" : "neutral");
+
+// ===================================================================== tabs
+function showTab(name) {
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  document.querySelectorAll("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== name));
+  if (name === "dash") renderDashboard();
+  if (name === "about") renderModelStatus();
+  try { localStorage.setItem("hv.tab", name); } catch { /* storage unavailable */ }
+}
+document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+const initialTab = location.hash.slice(1);
+if (initialTab && document.querySelector(`[data-panel="${initialTab}"]`)) showTab(initialTab);
+
+// ===================================================================== consent
+function renderConsent() {
+  $("consent-cards").innerHTML = Object.entries(CONSENTS).map(([p, c]) => {
+    const st = S.consent[p];
+    return `<div class="card"><h3>${esc(c.title)}</h3><p class="small">${esc(c.text)}</p>
+      <div class="row">${st === true ? badge("good", "Allowed") : st === false ? badge("neutral", "Declined") : badge("info", "Not decided")}</div>
+      <div class="row"><button class="btn ${st === true ? "" : "primary"}" data-consent="${p}" data-v="1">${st === true ? "Allowed" : "Allow"}</button>
+      <button class="btn" data-consent="${p}" data-v="0">${st === true ? "Revoke" : "Decline"}</button></div></div>`;
+  }).join("");
+  $("consent-cards").querySelectorAll("button[data-consent]").forEach((b) => b.addEventListener("click", () => {
+    const p = b.dataset.consent, v = b.dataset.v === "1";
+    S.consent[p] = v;
+    if (!v) {
+      if (p === "BMI") S.bmi = null;
+      if (p === "FACE_ANALYSIS") S.face = null;
+      if (p === "RECOGNITION") { S.templates = []; enrollQueue.length = 0; S.verify = null; renderEnroll(); $("verify-result").innerHTML = ""; }
+    }
+    renderConsent(); renderGates();
+  }));
+}
+function gate(purpose, el, body) {
+  const ok = S.consent[purpose] === true;
+  $(body).hidden = !ok;
+  $(el).innerHTML = ok ? "" : `<div class="card stack"><p>${esc(CONSENTS[purpose].title)} needs your consent first.</p><p class="small muted">${esc(CONSENTS[purpose].text)}</p>
+    <div class="row"><button class="btn primary" data-allow="${purpose}">Allow</button><button class="btn ghost" data-go="consent">Review all consents</button></div></div>`;
+  $(el).querySelector("[data-allow]")?.addEventListener("click", () => { S.consent[purpose] = true; renderConsent(); renderGates(); });
+  $(el).querySelector("[data-go]")?.addEventListener("click", () => showTab("consent"));
+}
+function renderGates() { gate("BMI", "bmi-gate", "bmi-body"); gate("FACE_ANALYSIS", "face-gate", "face-body"); gate("RECOGNITION", "verify-gate", "verify-body"); }
+$("consent-next").addEventListener("click", () => showTab("bmi"));
+
+// ===================================================================== BMI (backend/healthvision_server/services/bmi_service.py)
+const num = (v) => { if (v === null || v === undefined || String(v).trim() === "") return undefined; const n = Number(String(v).trim()); return Number.isFinite(n) ? n : NaN; };
+const round2 = (x) => (Math.round((x + Number.EPSILON) * 100) / 100).toFixed(2);
+function calcBmi({ hUnit, h, ft, inch, w, wUnit, age }) {
+  const errors = {};
+  let hm = null, kg = null, ageN = null;
+  if (hUnit === "ft_in") {
+    const f = num(ft), i = num(inch) ?? 0;
+    if (f === undefined) errors.height = "Height is required.";
+    else if (Number.isNaN(f) || Number.isNaN(i)) errors.height = "Height must be a number.";
+    else if (f < 0 || i < 0 || i >= 12 || f * 12 + i <= 0) errors.height = "Height must be greater than zero (inches 0–11.99).";
+    else hm = (f * 12 + i) * 0.0254;
+  } else {
+    const v = num(h);
+    if (v === undefined) errors.height = "Height is required.";
+    else if (Number.isNaN(v)) errors.height = "Height must be a number.";
+    else if (v <= 0) errors.height = "Height must be greater than zero.";
+    else hm = v / 100;
+  }
+  if (hm !== null && (hm * 100 < CFG.bmi.height_cm.min || hm * 100 > CFG.bmi.height_cm.max)) { errors.height = `Height must be between ${CFG.bmi.height_cm.min} and ${CFG.bmi.height_cm.max} cm.`; hm = null; }
+  const wv = num(w);
+  if (wv === undefined) errors.weight = "Weight is required.";
+  else if (Number.isNaN(wv)) errors.weight = "Weight must be a number.";
+  else if (wv <= 0) errors.weight = "Weight must be greater than zero.";
+  else { kg = wUnit === "lb" ? wv * 0.45359237 : wv; if (kg < CFG.bmi.weight_kg.min || kg > CFG.bmi.weight_kg.max) { errors.weight = `Weight must be between ${CFG.bmi.weight_kg.min} and ${CFG.bmi.weight_kg.max} kg.`; kg = null; } }
+  const a = num(age);
+  if (a !== undefined) { if (Number.isNaN(a) || !Number.isInteger(a) || a < 0 || a > 120) errors.age = "Age must be a whole number between 0 and 120."; else ageN = a; }
+  if (Object.keys(errors).length) return { status: "INVALID_INPUT", errors };
+  const bmi = kg / (hm * hm);
+  const warnings = [];
+  if (bmi < CFG.bmi.plausibility_warning.bmi_min || bmi > CFG.bmi.plausibility_warning.bmi_max) warnings.push("Please double-check the entered values.");
+  if (ageN === null) warnings.push("Categories assume an adult (18+).");
+  const base = { bmi, display: round2(bmi), calc: `${(Math.round(kg * 10) / 10).toFixed(1)} kg ÷ (${round2(hm)} m)² = ${round2(bmi)} kg/m²`, warnings };
+  if (ageN !== null && ageN < CFG.bmi.adult_min_age) return { status: "NOT_APPLICABLE", ...base, message: M.BMI_PEDIATRIC };
+  const cat = WHO_ADULT.find(([, , lo, hi]) => (lo === null || bmi >= lo) && (hi === null || bmi < hi));
+  return { status: "VALID", ...base, code: cat[0], label: cat[1], guidance: M.BMI_GUIDE[cat[0]] || M.BMI_GUIDE_HIGH };
+}
+$("h-unit").addEventListener("change", (e) => { const ft = e.target.value === "ft_in"; $("h-cm").hidden = ft; $("h-ft").hidden = !ft; $("h-in").hidden = !ft; });
+$("bmi-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const r = calcBmi({ hUnit: $("h-unit").value, h: $("h-cm").value, ft: $("h-ft").value, inch: $("h-in").value, w: $("w-val").value, wUnit: $("w-unit").value, age: $("age").value });
+  ["height", "weight", "age"].forEach((f) => ($(`err-${f}`).textContent = r.errors?.[f] ?? ""));
+  if (r.status !== "INVALID_INPUT") S.bmi = r;
+  renderBmi(r);
+});
+function bmiBlock(r) {
+  return `<div class="bmi-big num ${r.status === "NOT_APPLICABLE" ? "grey" : ""}">${r.display}<small> kg/m²</small></div>
+    ${r.status === "VALID" ? `<div>${badge(r.code === "NORMAL" ? "good" : "info", r.label)}</div><p class="note n-good">${esc(r.guidance)}</p>` : `<p class="note n-info">${esc(r.message)}</p>`}`;
+}
+function renderBmi(r) {
+  const el = $("bmi-result");
+  if (r.status === "INVALID_INPUT") { el.innerHTML = `<span class="kicker k-calc">CALCULATED</span><p class="note n-bad">Please correct the highlighted fields.</p>`; return; }
+  el.innerHTML = `<span class="kicker k-calc">CALCULATED</span>${bmiBlock(r)}
+    <dl class="kv small"><dt>Calculation</dt><dd class="num">${esc(r.calc)}</dd><dt>Reference</dt><dd>WHO TRS 894, 2000 (adult)</dd><dt>Limitation</dt><dd>${esc(M.BMI_LIMIT)}</dd></dl>
+    ${r.warnings.map((w) => `<p class="small muted">${esc(w)}</p>`).join("")}
+    <div class="row"><button class="btn primary" data-go="face">Next: face analysis</button><button class="btn" data-go="dash">View dashboard</button></div>`;
+  el.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.go)));
+}
+
+// ===================================================================== model loading
+const MODELS = {
+  yunet: { name: "YuNet face detector", state: "not loaded" },
+  ferplus: { name: "FER+ expression model", state: "not loaded" },
+  sface: { name: "SFace recognition model", state: "not loaded" },
+  landmarker: { name: "MediaPipe Face Landmarker", state: "not loaded" },
+};
+const sessions = {};
+let landmarker = null, loading = null;
+let manifest = null;
+// Model files are published as base64 text parts; decode and re-join them byte-for-byte.
+async function fetchModel(key) {
+  manifest = manifest || await (await fetch("models/manifest.json")).json();
+  const bufs = await Promise.all(manifest[key].map(async (p) => {
+    const r = await fetch("models/" + p); if (!r.ok) throw new Error(`${p}: HTTP ${r.status}`);
+    const bin = atob((await r.text()).trim()), u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u;
+  }));
+  const out = new Uint8Array(bufs.reduce((n, b) => n + b.length, 0));
+  let o = 0; for (const b of bufs) { out.set(b, o); o += b.length; }
+  return out;
+}
+function setModel(k, state) { MODELS[k].state = state; renderModelStatus(); }
+function renderModelStatus() {
+  $("model-status").innerHTML = Object.values(MODELS).map((m) => `<div><span>${esc(m.name)}</span><span>${m.state === "ready" ? badge("good", "READY") : m.state.startsWith("error") ? badge("bad", "ERROR") : badge("neutral", m.state.toUpperCase())}</span></div>`).join("")
+    + `<div><span>Liveness detection</span><span>${badge("neutral", "NOT IMPLEMENTED")}</span></div>`;
+}
+async function loadModels() {
+  if (loading) return loading;
+  loading = (async () => {
+    if (!window.ort) throw new Error("ONNX Runtime Web did not load");
+    ort.env.wasm.wasmPaths = new URL("lib/", location.href).href;
+    ort.env.wasm.numThreads = 1;
+    ort.env.logLevel = "error";
+    for (const k of ["yunet", "ferplus", "sface"]) {
+      setModel(k, "loading");
+      try { sessions[k] = await ort.InferenceSession.create(await fetchModel(k), { executionProviders: ["wasm"] }); setModel(k, "ready"); }
+      catch (e) { setModel(k, "error: " + e.message); throw e; }
+    }
+    setModel("landmarker", "loading");
+    try {
+      const { FilesetResolver, FaceLandmarker } = await import("./lib/vision_bundle.mjs");
+      const fileset = await FilesetResolver.forVisionTasks(new URL("lib/mp", location.href).href);
+      landmarker = await FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetBuffer: await fetchModel("landmarker"), delegate: "CPU" },
+        runningMode: "IMAGE", numFaces: 1, outputFacialTransformationMatrixes: true, outputFaceBlendshapes: false,
+      });
+      setModel("landmarker", "ready");
+    } catch (e) { setModel("landmarker", "error: " + e.message); console.warn("landmarker unavailable", e); }
+  })();
+  loading.catch(() => { loading = null; });
+  return loading;
+}
+$("load-models").addEventListener("click", () => loadModels().catch(() => {}));
+
+// ===================================================================== image helpers
+async function readImage(file) {
+  if (!/^image\/(jpeg|png)$/.test(file.type)) throw new Error("Please choose a JPEG or PNG photo.");
+  if (file.size > MAX_UPLOAD) throw new Error("This photo is larger than 10 MB. Please choose a smaller one.");
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+  if (bmp.width > MAX_SIDE || bmp.height > MAX_SIDE) throw new Error(`Photos can be at most ${MAX_SIDE}×${MAX_SIDE} pixels.`);
+  const c = document.createElement("canvas"); c.width = bmp.width; c.height = bmp.height;
+  c.getContext("2d", { willReadFrequently: true }).drawImage(bmp, 0, 0);
+  return c;
+}
+function cropCanvas(src, x, y, w, h, outW = w, outH = h) {
+  const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(outW)); c.height = Math.max(1, Math.round(outH));
+  const g = c.getContext("2d", { willReadFrequently: true }); g.imageSmoothingQuality = "high";
+  g.drawImage(src, x, y, w, h, 0, 0, c.width, c.height); return c;
+}
+function grayOf(canvas, maxSide = 640) {
+  let c = canvas; const s = Math.max(c.width, c.height);
+  if (s > maxSide) c = cropCanvas(canvas, 0, 0, canvas.width, canvas.height, canvas.width * maxSide / s, canvas.height * maxSide / s);
+  const d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, c.width, c.height).data;
+  const g = new Float32Array(c.width * c.height);
+  for (let i = 0; i < g.length; i++) g[i] = 0.299 * d[4 * i] + 0.587 * d[4 * i + 1] + 0.114 * d[4 * i + 2];
+  return { g, w: c.width, h: c.height };
+}
+const brightness = (canvas) => { const { g } = grayOf(canvas); let s = 0; for (const v of g) s += v; return s / g.length; };
+function laplacianVar(canvas) {
+  const { g, w, h } = grayOf(canvas); if (w < 3 || h < 3) return 0;
+  let n = 0, s = 0, s2 = 0;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x, v = g[i - 1] + g[i + 1] + g[i - w] + g[i + w] - 4 * g[i]; s += v; s2 += v * v; n++;
+  }
+  const m = s / n; return s2 / n - m * m;
+}
+
+// ===================================================================== detection (YuNet, decoded as in OpenCV face_detect.cpp)
+async function detectFaces(img) {
+  const S640 = 640, scale = S640 / Math.max(img.width, img.height);
+  const c = document.createElement("canvas"); c.width = S640; c.height = S640;
+  const g = c.getContext("2d", { willReadFrequently: true }); g.fillStyle = "#000"; g.fillRect(0, 0, S640, S640);
+  g.drawImage(img, 0, 0, Math.round(img.width * scale), Math.round(img.height * scale));
+  const d = g.getImageData(0, 0, S640, S640).data, n = S640 * S640, x = new Float32Array(3 * n);
+  for (let i = 0; i < n; i++) { x[i] = d[4 * i + 2]; x[n + i] = d[4 * i + 1]; x[2 * n + i] = d[4 * i]; } // BGR planes
+  const out = await sessions.yunet.run({ input: new ort.Tensor("float32", x, [1, 3, S640, S640]) });
+  const fd = CFG.face_detection, cands = [];
+  for (const st of [8, 16, 32]) {
+    const cols = S640 / st, cls = out[`cls_${st}`].data, obj = out[`obj_${st}`].data, bb = out[`bbox_${st}`].data, kp = out[`kps_${st}`].data;
+    for (let i = 0; i < cls.length; i++) {
+      const score = Math.sqrt(Math.min(1, Math.max(0, cls[i])) * Math.min(1, Math.max(0, obj[i])));
+      if (score < fd.candidate_floor) continue;
+      const r = Math.floor(i / cols), col = i % cols;
+      const cx = (col + bb[4 * i]) * st, cy = (r + bb[4 * i + 1]) * st, bw = Math.exp(bb[4 * i + 2]) * st, bh = Math.exp(bb[4 * i + 3]) * st;
+      const kps = []; for (let k = 0; k < 5; k++) kps.push([(kp[10 * i + 2 * k] + col) * st / scale, (kp[10 * i + 2 * k + 1] + r) * st / scale]);
+      cands.push({ x: (cx - bw / 2) / scale, y: (cy - bh / 2) / scale, w: bw / scale, h: bh / scale, score, kps });
+    }
+  }
+  cands.sort((a, b) => b.score - a.score);
+  const keep = [];
+  for (const f of cands) {
+    if (keep.length >= fd.max_faces_considered) break;
+    const overlaps = keep.some((k) => {
+      const ix = Math.max(0, Math.min(f.x + f.w, k.x + k.w) - Math.max(f.x, k.x)), iy = Math.max(0, Math.min(f.y + f.h, k.y + k.h) - Math.max(f.y, k.y));
+      return (ix * iy) / (f.w * f.h + k.w * k.h - ix * iy) > fd.nms_threshold;
+    });
+    if (!overlaps) keep.push(f);
+  }
+  return keep.map((f) => {
+    const x0 = Math.max(0, Math.round(f.x)), y0 = Math.max(0, Math.round(f.y));
+    const x1 = Math.min(img.width, Math.round(f.x + f.w)), y1 = Math.min(img.height, Math.round(f.y + f.h));
+    return { bbox: [x0, y0, Math.max(0, x1 - x0), Math.max(0, y1 - y0)], score: f.score, kps: f.kps };
+  });
+}
+function faceCount(dets) {
+  const fd = CFG.face_detection;
+  const faces = dets.filter((d) => d.score >= fd.face_detection_threshold), secondary = dets.filter((d) => d.score >= fd.min_secondary_face_confidence);
+  if (!faces.length) return { state: "NO_FACE" };
+  if (secondary.length > 1) return { state: "MULTIPLE_FACES" };
+  return { state: "ONE_FACE", primary: faces[0] };
+}
+
+// ===================================================================== landmarks + pose (MediaPipe)
+const KP5 = [468, 473, 1, 61, 291];
+const REGIONS = { eyes: [33, 133, 159, 145, 362, 263, 386, 374, 468, 473], nose: [1, 2, 4, 5, 98, 327, 168], mouth: [61, 291, 0, 17, 13, 14, 78, 308], jaw: [234, 454, 152, 172, 397, 136, 365, 58, 288] };
+function landmarks(img, det) {
+  if (!landmarker) return null;
+  const [x, y, w, h] = det.bbox, side = Math.max(w, h) * 2, cx = x + w / 2, cy = y + h / 2;
+  const x0 = Math.max(0, Math.floor(cx - side / 2)), y0 = Math.max(0, Math.floor(cy - side / 2));
+  const x1 = Math.min(img.width, Math.floor(cx + side / 2)), y1 = Math.min(img.height, Math.floor(cy + side / 2));
+  const crop = cropCanvas(img, x0, y0, x1 - x0, y1 - y0);
+  const res = landmarker.detect(crop);
+  if (!res.faceLandmarks?.length) return null;
+  const pts = res.faceLandmarks[0].map((p) => [p.x * crop.width + x0, p.y * crop.height + y0]);
+  const vis = {};
+  for (const [k, idx] of Object.entries(REGIONS)) vis[k] = idx.filter((i) => pts[i][0] >= 0 && pts[i][0] < img.width && pts[i][1] >= 0 && pts[i][1] < img.height).length / idx.length;
+  let pose = { yaw: 0, pitch: 0, roll: 0 };
+  const mat = res.facialTransformationMatrixes?.[0];
+  if (mat) {
+    const R = (r, c) => mat.data[c * 4 + r]; // column-major 4×4
+    const deg = 180 / Math.PI;
+    pose = { yaw: Math.atan2(-R(2, 0), Math.hypot(R(0, 0), R(1, 0))) * deg, pitch: Math.atan2(R(2, 1), R(2, 2)) * deg, roll: Math.atan2(R(1, 0), R(0, 0)) * deg };
+  }
+  return { pts, visibility: Math.min(...Object.values(vis)), pose, kps: KP5.map((i) => pts[i]) };
+}
+
+// ===================================================================== quality (FaceQualityService)
+const chk = (check, grade, detail) => ({ check, grade, detail });
+const worst = (cs) => cs.some((c) => c.grade === "POOR") ? "POOR" : cs.some((c) => c.grade === "ACCEPTABLE") ? "ACCEPTABLE" : "GOOD";
+function globalChecks(img) {
+  const q = CFG.quality, short = Math.min(img.width, img.height), b = brightness(img), lv = laplacianVar(img);
+  return [
+    chk("resolution", short >= q.min_image_short_side_px ? "GOOD" : "ACCEPTABLE", `image short side ${short}px (recommended ≥ ${q.min_image_short_side_px}px)`),
+    b < q.brightness_threshold.min_mean ? chk("brightness", "POOR", "image too dark") : b > q.brightness_threshold.max_mean ? chk("brightness", "POOR", "image too bright") : chk("brightness", "GOOD", "brightness OK"),
+    chk("global_blur", lv >= q.global_blur_min ? "GOOD" : "POOR", lv >= q.global_blur_min ? "image sharp enough" : "image too blurry"),
+  ];
+}
+function faceChecks(img, det, lm) {
+  const q = CFG.quality, [x, y, w, h] = det.bbox, size = Math.min(w, h), out = [];
+  out.push(chk("face_size", size >= q.minimum_face_size_px ? "GOOD" : "POOR", `face ${size}px` + (size >= q.minimum_face_size_px ? "" : ` — move closer (≥ ${q.minimum_face_size_px}px)`)));
+  if (w > 2 && h > 2) {
+    const crop = cropCanvas(img, x, y, w, h), fv = laplacianVar(crop), bt = q.blur_threshold;
+    const g = fv >= bt.laplacian_var_good ? "GOOD" : fv >= bt.laplacian_var_min ? "ACCEPTABLE" : "POOR";
+    out.push(chk("face_blur", g, { GOOD: "face sharp", ACCEPTABLE: "face slightly blurry", POOR: "face too blurry" }[g]));
+    const fb = brightness(crop);
+    out.push(fb < q.brightness_threshold.min_mean ? chk("face_lighting", "POOR", "face too dark") : fb > q.brightness_threshold.max_mean ? chk("face_lighting", "POOR", "face too bright") : chk("face_lighting", "GOOD", "face lighting OK"));
+  }
+  if (!lm) { out.push(chk("landmarks", landmarker ? "POOR" : "ACCEPTABLE", landmarker ? "facial landmarks not found" : "landmark model unavailable — pose not checked")); return out; }
+  out.push(chk("visibility", lm.visibility >= q.occlusion.min_landmark_visibility ? "GOOD" : "POOR", lm.visibility >= q.occlusion.min_landmark_visibility ? "face fully visible" : "part of the face is out of frame"));
+  const p = q.pose_max_deg, yaw = Math.abs(lm.pose.yaw), pitch = Math.abs(lm.pose.pitch), roll = Math.abs(lm.pose.roll);
+  if (yaw > p.yaw_max || pitch > p.pitch_max || roll > p.roll_max) out.push(chk("pose", "POOR", "head turned or tilted too far — face the camera"));
+  else if (yaw > p.yaw_good || pitch > p.pitch_good) out.push(chk("pose", "ACCEPTABLE", "head slightly turned"));
+  else out.push(chk("pose", "GOOD", "facing the camera"));
+  return out;
+}
+
+// ===================================================================== alignment (5-point similarity → ArcFace 112×112)
+const ARCFACE = [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.7299, 92.2041]];
+function align112(img, kps) {
+  if (!kps || kps.length !== 5 || kps.flat().some((v) => !Number.isFinite(v))) return null;
+  const ms = [0, 1].map((j) => kps.reduce((s, p) => s + p[j], 0) / 5), md = [0, 1].map((j) => ARCFACE.reduce((s, p) => s + p[j], 0) / 5);
+  let sxx = 0, sa = 0, sb = 0;
+  for (let i = 0; i < 5; i++) {
+    const x = kps[i][0] - ms[0], y = kps[i][1] - ms[1], u = ARCFACE[i][0] - md[0], v = ARCFACE[i][1] - md[1];
+    sxx += x * x + y * y; sa += x * u + y * v; sb += x * v - y * u;
+  }
+  if (sxx === 0) return null;
+  const a = sa / sxx, b = sb / sxx, tx = md[0] - (a * ms[0] - b * ms[1]), ty = md[1] - (b * ms[0] + a * ms[1]);
+  const c = document.createElement("canvas"); c.width = 112; c.height = 112;
+  const g = c.getContext("2d", { willReadFrequently: true }); g.fillStyle = "#000"; g.fillRect(0, 0, 112, 112);
+  g.imageSmoothingQuality = "high"; g.setTransform(a, b, -b, a, tx, ty); g.drawImage(img, 0, 0);
+  return c;
+}
+
+// ===================================================================== expression (FER+) + DecisionEngine expression.v1
+const FER_LABELS = ["neutral", "happiness", "surprise", "sadness", "anger", "disgust", "fear", "contempt"];
+async function expressionProbs(aligned) {
+  const c = cropCanvas(aligned, 0, 0, 112, 112, 64, 64), d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, 64, 64).data;
+  const x = new Float32Array(64 * 64);
+  for (let i = 0; i < x.length; i++) x[i] = 0.299 * d[4 * i] + 0.587 * d[4 * i + 1] + 0.114 * d[4 * i + 2];
+  const out = await sessions.ferplus.run({ [sessions.ferplus.inputNames[0]]: new ort.Tensor("float32", x, [1, 1, 64, 64]) });
+  const z = Array.from(out[sessions.ferplus.outputNames[0]].data), m = Math.max(...z), e = z.map((v) => Math.exp(v - m)), s = e.reduce((p, q) => p + q, 0);
+  return Object.fromEntries(FER_LABELS.map((l, i) => [l, e[i] / s]));
+}
+function decideExpression(raw, quality) {
+  const E = CFG.expression, mapped = Object.fromEntries(E.classes.map((c) => [c, 0]));
+  let excluded = 0;
+  for (const [l, p] of Object.entries(raw)) { const t = E.class_map[l]; if (t === null || t === undefined) excluded += p; else mapped[t] += p; }
+  const tot = Object.values(mapped).reduce((a, b) => a + b, 0);
+  if (E.renormalize_after_exclusion && tot > 0) for (const k in mapped) mapped[k] /= tot;
+  const ranked = Object.entries(mapped).sort((a, b) => b[1] - a[1]), [top1, p1] = ranked[0], p2 = ranked[1][1];
+  const reasons = [];
+  if (excluded > E.max_excluded_mass) reasons.push("EXCLUDED_MASS_TOO_HIGH");
+  if (p1 < E.expression_confidence_threshold.moderate) reasons.push("LOW_CONFIDENCE");
+  if (p1 - p2 < E.min_top2_margin) reasons.push("SMALL_MARGIN");
+  const probs = Object.fromEntries(ranked);
+  if (reasons.length) return { status: "UNCERTAIN", confidence: p1, probs, reasons };
+  let band = p1 >= E.expression_confidence_threshold.high ? "HIGH" : "MODERATE";
+  if (quality === "ACCEPTABLE" && band === "HIGH") { band = "MODERATE"; reasons.push("BAND_CAPPED_BY_ACCEPTABLE_QUALITY"); }
+  return { status: "ESTIMATED", label: top1, confidence: p1, band, probs, reasons };
+}
+
+// ===================================================================== embedding (SFace)
+async function embed(aligned) {
+  const d = aligned.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, 112, 112).data, n = 112 * 112, x = new Float32Array(3 * n);
+  for (let i = 0; i < n; i++) { x[i] = d[4 * i]; x[n + i] = d[4 * i + 1]; x[2 * n + i] = d[4 * i + 2]; } // RGB planes
+  const out = await sessions.sface.run({ [sessions.sface.inputNames[0]]: new ort.Tensor("float32", x, [1, 3, 112, 112]) });
+  const v = Float32Array.from(out[sessions.sface.outputNames[0]].data), norm = Math.hypot(...v) || 1;
+  return v.map((q) => q / norm);
+}
+const cosine = (a, b) => a.reduce((s, v, i) => s + v * b[i], 0);
+
+// ===================================================================== full pipeline
+async function runPipeline(file, { enrollment = false } = {}) {
+  const lat = {}, t = () => performance.now();
+  let t0 = t();
+  const img = await readImage(file); lat.decode = t() - t0;
+  t0 = t(); await loadModels(); lat.model_load = t() - t0;
+  const r = { img, lat, faces: [], checks: [], quality: null };
+  t0 = t(); r.checks = globalChecks(img); lat.quality_global = t() - t0;
+  t0 = t(); const dets = await detectFaces(img); lat.detection = t() - t0;
+  const fc = faceCount(dets); r.state = fc.state;
+  r.faces = dets.filter((d) => d.score >= Math.min(CFG.face_detection.min_secondary_face_confidence, CFG.face_detection.face_detection_threshold));
+  r.quality = worst(r.checks);
+  if (fc.state === "NO_FACE") { r.stop = "NO_FACE"; r.message = M.NO_FACE; return r; }
+  if (fc.state === "MULTIPLE_FACES") { r.stop = "MULTIPLE_FACES"; r.message = M.MULTI; return r; }
+  r.primary = fc.primary;
+  t0 = t(); r.lm = landmarks(img, r.primary); lat.landmark = t() - t0;
+  t0 = t(); const fcs = faceChecks(img, r.primary, r.lm); lat.quality_face = t() - t0;
+  r.checks = r.checks.concat(fcs); r.quality = worst(r.checks);
+  if (r.quality === "POOR" || (enrollment && r.quality !== "GOOD")) {
+    const reasons = r.checks.filter((c) => c.grade === "POOR").map((c) => c.detail);
+    r.stop = "POOR_QUALITY"; r.message = M.POOR(reasons.length ? reasons.join(", ") : "quality must be GOOD for enrollment"); return r;
+  }
+  t0 = t(); r.aligned = align112(img, r.primary.kps) || (r.lm && align112(img, r.lm.kps)); lat.alignment = t() - t0;
+  if (!r.aligned) { r.stop = "ALIGNMENT_FAILED"; r.message = M.ALIGN; }
+  return r;
+}
+function drawPreview(canvas, r) {
+  canvas.width = r.img.width; canvas.height = r.img.height;
+  const g = canvas.getContext("2d"); g.drawImage(r.img, 0, 0);
+  g.lineWidth = Math.max(3, r.img.width / 250); g.strokeStyle = "#3ee0a1";
+  for (const f of r.faces) g.strokeRect(...f.bbox);
+}
+const latencyHtml = (lat) => `<div class="lat"><span style="background:none;padding:0">Measured on this device:</span>${Object.entries(lat).map(([k, v]) => `<span>${k.replace(/_/g, " ")} ${v.toFixed(0)} ms</span>`).join("")}</div>`;
+const checksHtml = (cs) => `<ul class="checks">${cs.map((c) => `<li>${badge(gradeKind(c.grade), c.grade)}<span>${esc(c.detail)}</span></li>`).join("")}</ul>`;
+function expressionHtml(e) {
+  if (e.status === "UNCERTAIN") return `<div class="expr"><div class="row" style="justify-content:space-between"><span class="kicker k-ai">FACIAL EXPRESSION</span>${badge("warn", "UNCERTAIN")}</div><div class="expr-main">${esc(M.UNCERTAIN)}</div><p class="small muted">${esc(M.EXPR_NOTE)}</p></div>`;
+  const lbl = M.DISPLAY[e.label];
+  return `<div class="expr"><div class="row" style="justify-content:space-between"><span class="kicker k-ai">FACIAL EXPRESSION</span>${badge("info", "ESTIMATED")}</div>
+    <div class="expr-main">Facial expression estimate: ${esc(lbl)}</div>
+    <p class="muted">Confidence: <strong>${pct(e.confidence)}</strong> (${e.band === "HIGH" ? "high" : "moderate"}-confidence estimate) — ${esc(M.CONF_LABEL)}</p>
+    <p><em>The face in this photo shows ${esc(M.DESC[e.label])}.</em></p>
+    <p class="context">${esc(M.CONTEXT(e.label))}</p>
+    <div class="bars">${Object.entries(e.probs).map(([k, v]) => `<div class="bar-row"><span>${esc(M.DISPLAY[k])}</span><span class="bar"><span style="width:${(v * 100).toFixed(1)}%"></span></span><span class="bar-val">${pct(v)}</span></div>`).join("")}</div>
+    <p class="small muted">${esc(M.EXPR_NOTE)}</p></div>`;
+}
+
+// ===================================================================== face analysis page
+async function analyzeFace(file) {
+  const el = $("face-result");
+  el.innerHTML = `<span class="kicker k-ai">AI ESTIMATES</span><p class="muted">Analysing… (the first run loads the AI models, about 80 MB)</p>`;
+  try {
+    const r = await runPipeline(file);
+    $("face-preview").hidden = false; drawPreview($("face-canvas"), r);
+    let expr = null;
+    if (!r.stop) { const t0 = performance.now(); expr = decideExpression(await expressionProbs(r.aligned), r.quality); r.lat.expression = performance.now() - t0; }
+    S.face = { state: r.state, quality: r.quality, expr, message: r.message, pose: r.lm?.pose };
+    el.innerHTML = `<span class="kicker k-ai">AI ESTIMATES</span>
+      <div class="field"><span>Face detection</span><span>${r.state === "ONE_FACE" ? badge("good", "Face detected") : badge("bad", r.state.replace("_", " "))}${r.faces[0] ? ` <span class="small muted">detection confidence ${pct(r.faces[0].score)}</span>` : ""}</span></div>
+      ${r.state === "ONE_FACE" ? `<div class="field"><span>Image quality</span><span>${badge(gradeKind(r.quality), r.quality)}${checksHtml(r.checks)}</span></div>` : ""}
+      ${r.lm ? `<div class="field"><span>Head pose</span><span class="muted num small">yaw ${r.lm.pose.yaw.toFixed(0)}° · pitch ${r.lm.pose.pitch.toFixed(0)}° · roll ${r.lm.pose.roll.toFixed(0)}°</span></div>` : ""}
+      ${r.message ? `<p class="note n-warn">${esc(r.message)}</p>` : ""}
+      ${expr ? expressionHtml(expr) : ""}
+      ${latencyHtml(r.lat)}
+      <div class="row"><button class="btn primary" data-go="dash">View dashboard</button><button class="btn" data-go="verify">Optional: verify identity</button></div>`;
+    el.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.go)));
+  } catch (e) {
+    el.innerHTML = `<span class="kicker k-ai">AI ESTIMATES</span><p class="note n-bad">${esc(e.message || "Something went wrong.")}</p>`;
+  }
+}
+function wireDrop(labelId, inputId, handler) {
+  const lab = $(labelId), inp = $(inputId);
+  inp.addEventListener("change", () => { if (inp.files.length) handler([...inp.files]); inp.value = ""; });
+  lab.addEventListener("dragover", (e) => { e.preventDefault(); lab.classList.add("over"); });
+  lab.addEventListener("dragleave", () => lab.classList.remove("over"));
+  lab.addEventListener("drop", (e) => { e.preventDefault(); lab.classList.remove("over"); if (!inp.disabled && e.dataTransfer.files.length) handler([...e.dataTransfer.files]); });
+}
+wireDrop("face-drop", "face-file", (fs) => analyzeFace(fs[0]));
+
+// ===================================================================== camera (works on a normal https site; may be refused inside embedded viewers)
+let camStream = null, camHandler = null;
+function closeCamera() {
+  camStream?.getTracks().forEach((t) => t.stop()); camStream = null; camHandler = null;
+  $("cam-video").srcObject = null; $("cam-dialog").hidden = true;
+}
+async function openCamera(handler) {
+  camHandler = handler;
+  $("cam-dialog").hidden = false; $("cam-error").hidden = true; $("cam-capture").disabled = true;
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("unsupported");
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 960 }, facingMode: "user" }, audio: false });
+    const v = $("cam-video"); v.srcObject = camStream; await v.play();
+    $("cam-capture").disabled = false;
+  } catch {
+    $("cam-error").hidden = false;
+    $("cam-error").textContent = "The camera is not available here (no permission, no camera, or this viewer blocks it). Please choose a photo instead.";
+  }
+}
+$("cam-cancel").addEventListener("click", closeCamera);
+$("cam-dialog").addEventListener("keydown", (e) => { if (e.key === "Escape") closeCamera(); });
+$("cam-capture").addEventListener("click", () => {
+  const v = $("cam-video"); if (!v.videoWidth) return;
+  const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext("2d").drawImage(v, 0, 0);
+  const handler = camHandler;
+  c.toBlob((b) => { closeCamera(); if (b && handler) handler(new File([b], "camera.jpg", { type: "image/jpeg" })); }, "image/jpeg", 0.92);
+});
+const enrollQueue = [];
+document.querySelectorAll("[data-camera]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.camera;
+  if (k === "face") openCamera((f) => analyzeFace(f));
+  if (k === "verify") openCamera((f) => verify(f));
+  if (k === "enroll") openCamera((f) => { enrollQueue.push(f); enroll(enrollQueue.slice(-CFG.recognition.enrollment_max)); });
+}));
+
+// ===================================================================== enrollment + verification
+function renderEnroll() {
+  const has = S.templates.length > 0;
+  $("enroll-clear").hidden = !has;
+  $("verify-file").disabled = !has;
+  document.querySelector('[data-camera="verify"]').disabled = !has;
+  $("verify-hint").textContent = has ? `Compares a new photo with your ${S.templates.length} enrolled template(s).` : "Enroll first.";
+  if (!has) { $("enroll-thumbs").innerHTML = ""; }
+}
+async function enroll(files) {
+  const msg = $("enroll-msg");
+  if (files.length < CFG.recognition.enrollment_min || files.length > CFG.recognition.enrollment_max) { msg.innerHTML = `<p class="note n-warn">Please choose between 1 and 5 photos.</p>`; return; }
+  msg.innerHTML = `<p class="muted">Checking ${files.length} photo(s)…</p>`;
+  const accepted = [], report = [];
+  $("enroll-thumbs").innerHTML = "";
+  for (const [i, f] of files.entries()) {
+    try {
+      const r = await runPipeline(f, { enrollment: true });
+      const fig = document.createElement("figure"), cv = document.createElement("canvas");
+      if (r.aligned) { cv.width = 112; cv.height = 112; cv.getContext("2d").drawImage(r.aligned, 0, 0); } else { drawPreview(cv, r); }
+      fig.append(cv); const cap = document.createElement("figcaption"); cap.textContent = r.stop ? "Not used" : "Accepted"; fig.append(cap);
+      $("enroll-thumbs").append(fig);
+      if (r.stop) { report.push(`Photo ${i + 1}: ${r.message}`); continue; }
+      accepted.push(await embed(r.aligned));
+    } catch (e) { report.push(`Photo ${i + 1}: ${e.message}`); }
+  }
+  if (!accepted.length) { msg.innerHTML = `<p class="note n-warn">None of the photos met the enrollment quality yet. ${esc(report.join(" "))}</p>`; return; }
+  for (let i = 0; i < accepted.length; i++) for (let j = i + 1; j < accepted.length; j++) {
+    if (cosine(accepted[i], accepted[j]) < CFG.recognition.recognition_threshold) { msg.innerHTML = `<p class="note n-warn">The photos do not appear to show the same person. Please use photos of yourself only.</p>`; return; }
+  }
+  S.templates = accepted.slice(0, 5); S.verify = null; $("verify-result").innerHTML = "";
+  msg.innerHTML = `<p class="note n-good">Enrollment complete — ${S.templates.length} template(s) kept in this tab's memory. Your photos were not stored.</p>${report.length ? `<p class="small muted">${esc(report.join(" "))}</p>` : ""}`;
+  renderEnroll();
+}
+async function verify(file) {
+  const el = $("verify-result");
+  el.innerHTML = `<p class="muted">Verifying…</p>`;
+  try {
+    const r = await runPipeline(file);
+    const T = CFG.recognition;
+    let decision = "NOT_PERFORMED", sim = null, reason = r.stop;
+    if (!r.stop) {
+      const t0 = performance.now(); const probe = await embed(r.aligned); r.lat.embedding = performance.now() - t0;
+      sim = Math.max(...S.templates.map((tpl) => cosine(probe, tpl)));
+      decision = sim >= T.recognition_threshold ? "MATCH" : sim < T.no_match_threshold ? "NO_MATCH" : "UNCERTAIN";
+    }
+    S.verify = { decision, sim, quality: r.quality };
+    const kind = decision === "MATCH" ? "good" : decision === "NO_MATCH" ? "bad" : "warn";
+    el.innerHTML = `<div class="note n-demo">Demo mode — recognition threshold not calibrated on validation data</div>
+      <div class="verdict">${badge(kind, decision.replace("_", " "))}<span>${esc(decision === "NOT_PERFORMED" ? r.message : M.VERIFY[decision])}</span></div>
+      ${sim !== null ? `<p class="muted small">Similarity <span class="num">${sim.toFixed(2)}</span> (threshold ${T.recognition_threshold.toFixed(2)}, SFace 2021dec). This is a similarity score, not a percentage of certainty.</p>` : ""}
+      <p class="small muted">Liveness: not performed · quality ${esc(r.quality ?? "—")}</p>${latencyHtml(r.lat)}`;
+  } catch (e) { el.innerHTML = `<p class="note n-bad">${esc(e.message || "Something went wrong.")}</p>`; }
+}
+wireDrop("enroll-drop", "enroll-file", (fs) => enroll(fs));
+wireDrop("verify-drop", "verify-file", (fs) => verify(fs[0]));
+$("enroll-clear").addEventListener("click", () => { S.templates = []; enrollQueue.length = 0; S.verify = null; $("enroll-msg").innerHTML = `<p class="note n-good">Face template deleted.</p>`; $("verify-result").innerHTML = ""; renderEnroll(); });
+
+// ===================================================================== dashboard
+function renderDashboard() {
+  const b = S.bmi, f = S.face, v = S.verify;
+  $("dash").innerHTML = `
+    <section class="card panel calc stack"><span class="kicker k-calc">CALCULATED</span><h3>BMI</h3>
+      ${b ? `${bmiBlock(b)}<p class="small num">${esc(b.calc)}</p><p class="small muted">Reference: WHO TRS 894, 2000</p>` : `<p class="muted">Not performed yet.</p>`}</section>
+    <section class="card panel ai stack"><span class="kicker k-ai">AI ESTIMATES</span><h3>Face analysis</h3>
+      ${f ? `<div class="field"><span>Face detection</span><span>${f.state === "ONE_FACE" ? badge("good", "Face detected") : badge("bad", f.state.replace("_", " "))}</span></div>
+        ${f.state === "ONE_FACE" ? `<div class="field"><span>Image quality</span><span>${badge(gradeKind(f.quality), f.quality)}</span></div>` : ""}
+        ${f.expr ? expressionHtml(f.expr) : f.message ? `<p class="note n-warn">${esc(f.message)}</p>` : ""}` : `<p class="muted">Not performed yet.</p>`}</section>
+    <section class="card panel id stack"><span class="kicker k-id">IDENTITY</span><h3>Face verification</h3>
+      ${v ? `<div class="note n-demo">Demo mode — recognition threshold not calibrated on validation data</div>
+        <div class="verdict">${badge(v.decision === "MATCH" ? "good" : v.decision === "NO_MATCH" ? "bad" : "warn", v.decision.replace("_", " "))}<span>${esc(M.VERIFY[v.decision] || "Verification was not performed.")}</span></div>
+        ${v.sim !== null ? `<p class="small muted">Similarity ${v.sim.toFixed(2)} · threshold ${CFG.recognition.recognition_threshold.toFixed(2)}</p>` : ""}
+        <p class="small muted">Liveness detection is not implemented in this version.</p>` : `<p class="muted">Optional. Not used yet.</p>`}</section>`;
+  $("dash-notes").innerHTML = `<p>${esc(M.EXPR_NOTE)}</p><p>${esc(M.BMI_NOTE)}</p><p>${esc(M.FOOTER)}</p><p class="small muted">Models: YuNet 2023mar · MediaPipe Face Landmarker float16/1 · FER+ opset8 · SFace 2021dec · nothing left this device.</p>`;
+}
+
+// ===================================================================== boot
+renderConsent(); renderGates(); renderEnroll(); renderModelStatus();
+try { const t = localStorage.getItem("hv.tab"); if (!initialTab && t && t !== "consent") showTab(t); } catch { /* storage unavailable */ }
+window.__hv = { calcBmi, loadModels, runPipeline, decideExpression, S };
+</script>

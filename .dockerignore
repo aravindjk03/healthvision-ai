@@ -1,0 +1,9 @@
+.venv
+data
+frontend/node_modules
+frontend/dist
+models/*.onnx
+models/*.task
+tests/fixtures/local
+**/__pycache__
+.git

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HealthVision AI — Report {{ r.analysis_id }}</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 820px; margin: 24px auto; padding: 0 16px; color: #1b2733; }
+  h1 { font-size: 22px; } h2 { font-size: 16px; margin-top: 28px; border-bottom: 1px solid #d5dde5; padding-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; } td { border: 1px solid #d5dde5; padding: 6px 8px; vertical-align: top; }
+  td:first-child { width: 32%; background: #f3f6f9; font-weight: 600; }
+  .muted { color: #5b6b7a; font-size: 13px; } .banner { background: #fff4e0; border: 1px solid #f0c36d; padding: 6px 8px; }
+</style>
+</head>
+<body>
+<h1>HealthVision AI — Analysis Report</h1>
+<p class="muted">Analysis ID {{ r.analysis_id }} · generated {{ r.generated_at }}</p>
+
+<h2>1. Calculated — BMI</h2>
+{% if r.bmi %}
+<table>
+<tr><td>BMI</td><td>{{ r.bmi.bmi_display }}</td></tr>
+<tr><td>Category</td><td>{{ r.bmi.category_label or r.bmi.message }}</td></tr>
+{% if r.bmi.guidance %}<tr><td>Context</td><td>{{ r.bmi.guidance }}</td></tr>{% endif %}
+<tr><td>Calculation</td><td>{{ r.bmi.calculation }}</td></tr>
+<tr><td>Reference</td><td>{{ r.bmi.reference.citation }}</td></tr>
+<tr><td>Limitation</td><td>{{ r.bmi.limitation }}</td></tr>
+</table>
+{% else %}<p>Not performed in this analysis.</p>{% endif %}
+
+<h2>2. AI estimates — face analysis</h2>
+{% if r.face %}
+<table>
+<tr><td>Face detection</td><td>{{ r.face.face_state }} ({{ r.face.face_count }} face(s))</td></tr>
+<tr><td>Image quality</td><td>{{ r.quality.grade if r.quality else '—' }}</td></tr>
+{% if r.expression %}
+<tr><td>Expression</td><td>{{ r.expression.display }}</td></tr>
+{% if r.expression.context %}<tr><td>Context</td><td>{{ r.expression.context }}</td></tr>{% endif %}
+<tr><td>Confidence</td><td>{% if r.expression.confidence is not none %}{% if r.expression.confidence >= 0.995 %}&gt;99%{% else %}{{ (r.expression.confidence * 100) | round | int }}%{% endif %} — {{ r.expression.confidence_label }}{% else %}—{% endif %}</td></tr>
+<tr><td>Note</td><td>{{ r.expression.note }}</td></tr>
+{% endif %}
+</table>
+{% else %}<p>Not performed in this analysis.</p>{% endif %}
+
+<h2>3. Identity — face verification</h2>
+{% if r.include_recognition and r.recognition %}
+{% if r.recognition.demo_banner %}<p class="banner">{{ r.recognition.demo_banner }}</p>{% endif %}
+<table>
+<tr><td>Decision</td><td>{{ r.recognition.message }}</td></tr>
+<tr><td>Similarity</td><td>{{ r.recognition.similarity }} (threshold {{ r.recognition.thresholds.match }}, {{ r.recognition.thresholds.source }})</td></tr>
+<tr><td>Liveness</td><td>{{ r.recognition.liveness_notice }}</td></tr>
+</table>
+{% else %}<p>Not included.</p>{% endif %}
+
+<h2>4. Traceability</h2>
+<table>
+<tr><td>Model versions</td><td>{% for k, v in r.model_versions.items() %}{{ k }}: {{ v }}<br>{% endfor %}</td></tr>
+<tr><td>Config version</td><td>{{ r.config_version }}</td></tr>
+<tr><td>Consent status</td><td>{% for k, v in r.consent_status.items() %}{{ k }}: {{ v.status }}<br>{% endfor %}</td></tr>
+<tr><td>Production readiness gate</td><td>{{ r.readiness_gate }}</td></tr>
+</table>
+
+<h2>5. Limitations</h2>
+<ul>{% for l in r.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+</body>
+</html>

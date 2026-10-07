@@ -1,7 +1,17 @@
+config/server.yaml
 models/*.onnx
 models/*.task
 data/
+reports/benchmarks/
 __pycache__/
+*.pyc
 .pytest_cache/
 node_modules/
+frontend/dist/
 .venv/
+*.egg-info/
+tests/fixtures/local/
+tsconfig.tsbuildinfo
+web-demo/dist/
+web-demo/node_modules/
+.hypothesis/

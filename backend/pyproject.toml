@@ -1,0 +1,36 @@
+[project]
+name = "healthvision-server"
+version = "0.1.0"
+description = "HealthVision AI V1 prototype — BMI + facial expression estimate + consent-based face verification"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.29",
+  "pydantic>=2.6",
+  "sqlalchemy>=2.0",
+  "pyyaml>=6.0",
+  "numpy>=1.26",
+  "opencv-python-headless>=4.9",
+  "onnxruntime>=1.17",
+  "mediapipe>=0.10.14",
+  "pillow>=10.0",
+  "cryptography>=42",
+  "argon2-cffi>=23.1",
+  "keyring>=24",
+  "reportlab>=4.0",
+  "jinja2>=3.1",
+  "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27", "hypothesis>=6.100"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["healthvision_server*"]
+
+[tool.setuptools.package-data]
+healthvision_server = ["domain/*.yaml", "reports/templates/*"]

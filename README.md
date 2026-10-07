@@ -1,12 +1,37 @@
-# HealthVision AI — Architecture & Implementation Plan
+# HealthVision AI
 
 **BMI + Facial Expression Estimation + Consent-Based Face Verification**
 
-> **Status: V1 prototype implemented as a Streamlit app** (`streamlit_app.py` + `healthvision/` package),
-> built from the architecture plan in [docs/](docs/). Not production-ready — see the readiness gate in
-> [docs/14_PRODUCTION_ROADMAP.md](docs/14_PRODUCTION_ROADMAP.md) and Settings → readiness in the app.
+> **Status: V1 prototype built, in three versions** (below). BMI, face analysis (detection, quality,
+> landmarks, expression estimate) and consent-based 1:1 face verification work end to end.
+> It is a **prototype**: models are not validated locally, recognition thresholds are
+> demo-uncalibrated and there is no liveness check. The production-readiness gate reports **NOT MET**.
 
-## Run it
+## Three ways to run it
+
+| Version | Best for | Where the photo is processed | Start |
+|---|---|---|---|
+| **Streamlit app** (`streamlit_app.py`, `healthvision/`) | A hosted link for a remote team | On the Streamlit server, in memory, then discarded | [Streamlit](#streamlit-app) |
+| **Full app** (`backend/healthvision_server/` + `frontend/`) | Full features on one computer: logins, history, PDF reports, audit log, camera | On that computer only | [Full app](#full-app-fastapi--react) |
+| **Browser-only demo** (`web-demo/`) | A static website or offline demo; no server | Inside each visitor's browser | [web-demo/README.md](web-demo/README.md) |
+
+All three use the same four model files (YuNet, MediaPipe Face Landmarker, FER+, SFace). Each version has its own settings file, so some demo thresholds differ (for example the Streamlit app uses a 0.363 recognition threshold, the others 0.40).
+
+---
+
+## What HealthVision AI is
+
+Three **separate** measurements, presented together on one dashboard:
+
+| Domain | What it is | What it is NOT |
+|---|---|---|
+| **BMI** | A deterministic mathematical calculation from height and weight, classified against a selected reference table | A diagnosis, a body-fat measurement, or valid for children with adult cut-offs |
+| **Facial expression** | An AI *estimate* of the visible facial-expression category | A reading of internal emotion, mood, mental health or personality |
+| **Face verification** | Consent-based biometric comparison against a person's *own* enrolled template | Public face search, stranger identification, or guaranteed-correct identity |
+
+There is **no combined "Health Score"**. See [docs/15_LIMITATIONS.md](docs/15_LIMITATIONS.md).
+
+## Streamlit app
 
 ```bash
 pip install -r requirements.txt
@@ -14,15 +39,15 @@ streamlit run streamlit_app.py
 ```
 
 On first start the app downloads the four model files listed in [models/registry.yaml](models/registry.yaml)
-(~78 MB) and verifies each SHA-256 before loading it. Tests: `pip install -r requirements-dev.txt && pytest`.
+(~78 MB) and verifies each SHA-256 before loading it. Tests: `pip install -r requirements-dev.txt && pytest tests/test_*.py`.
 
-### Deploy on Streamlit Community Cloud
+### Deploy on Streamlit Community Cloud (live link for the team)
 
 1. https://share.streamlit.io → **Create app** → repo `aravindjk03/healthvision-ai`, branch `main`, file `streamlit_app.py`.
 2. **Advanced settings → Python 3.12** (the version it was tested on).
 3. Deploy. `packages.txt` installs the system libraries OpenCV needs; `requirements.txt` the Python packages.
 
-## What is implemented (V1)
+### What the Streamlit app implements
 
 | Component | Implementation |
 |---|---|
@@ -38,7 +63,7 @@ On first start the app downloads the four model files listed in [models/registry
 | Privacy | Three independent consents, revocation-triggered deletion, AES-256-GCM envelope-encrypted templates, crypto-shredding, export, delete-all |
 | Audit | Hash-chained, rejects biometric fields |
 
-### Deviations from the plan (hosted-demo constraints)
+#### Deviations from the plan (hosted-demo constraints)
 
 | Plan (docs) | Hosted V1 | Why |
 |---|---|---|
@@ -48,19 +73,71 @@ On first start the app downloads the four model files listed in [models/registry
 | Inference on the user's device | Inference on the Streamlit server; images processed in memory and discarded | Hosting model; disclosed in the app sidebar. Run locally for on-device processing |
 | Recognition thresholds calibrated | Demo thresholds (vendor reference 0.363 cosine), labelled DEMO — UNCALIBRATED | No local validation set yet (docs/13) |
 
----
+## Full app (FastAPI + React)
 
-## What HealthVision AI is
+Requirements: **Python 3.11 or 3.12** (recommended on Windows; 3.13 works on Linux), **Node.js 18+**, and about 1 GB of disk space. A webcam is optional; you can upload photos instead.
 
-Three **separate** measurements, presented together on one dashboard:
+**Windows (PowerShell)**
+```powershell
+git clone https://github.com/aravindjk03/healthvision-ai.git
+cd healthvision-ai
+.\scripts\setup.ps1      # creates .venv, installs packages, downloads + verifies the 4 AI models, builds the UI
+.\scripts\run.ps1        # starts the app and opens http://127.0.0.1:8600
+```
 
-| Domain | What it is | What it is NOT |
+**macOS / Linux**
+```bash
+git clone https://github.com/aravindjk03/healthvision-ai.git && cd healthvision-ai
+./scripts/setup.sh && ./scripts/run.sh     # then open http://127.0.0.1:8600
+```
+
+On first launch, create the administrator account (there are no default credentials). Then
+click **Start analysis**. Everything runs locally, and the app listens on 127.0.0.1 only.
+
+| Task | Command |
+|---|---|
+| Run the tests | `python tools/fetch_test_fixtures.py` then `python -m pytest` |
+| Frontend dev server (hot reload) | `cd frontend && npm run dev` (proxies `/api` to :8600) |
+| Verify model files | `python tools/fetch_models.py --verify` |
+| Verify the audit-log hash chain | `python tools/verify_audit.py` |
+| Measure latency on this device | `python tools/benchmark_latency.py --image <photo> --device <name>` |
+| Calibrate recognition thresholds | `python tools/calibrate_recognition.py --manifest <csv> --write` |
+
+Configuration: copy `config/server.example.yaml` to `config/server.yaml` and edit it. (`config/healthvision.yaml` is the Streamlit app's settings file.)
+Every threshold is set there; restart the app to apply changes.
+
+### Deploying (container)
+
+`docker build -t healthvision .` then
+`docker run -p 127.0.0.1:8600:8600 -e HEALTHVISION_KEK=$(python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())") -v hv-data:/app/data healthvision`.
+Keep `HEALTHVISION_KEK` stable and secret, because it encrypts the face templates. V1 is designed
+for one device. Before exposing it beyond localhost, put it behind HTTPS and access control,
+and read [docs/14](docs/14_PRODUCTION_ROADMAP.md) §6 and [docs/09](docs/09_PRIVACY_ARCHITECTURE.md) §7.
+Biometric data has legal requirements in most jurisdictions.
+
+### Sharing with your team
+
+| Option | What the team gets | How |
 |---|---|---|
-| **BMI** | A deterministic mathematical calculation from height and weight, classified against a selected reference table | A diagnosis, a body-fat measurement, or valid for children with adult cut-offs |
-| **Facial expression** | An AI *estimate* of the visible facial-expression category | A reading of internal emotion, mood, mental health or personality |
-| **Face verification** | Consent-based biometric comparison against a person's *own* enrolled template | Public face search, stranger identification, or guaranteed-correct identity |
+| **GitHub Pages** (recommended for testing) | The browser-only version at `https://<owner>.github.io/healthvision-ai/`, with camera, BMI, face analysis and verification. Photos never leave each person's browser | 1. Merge to `main`. 2. Repo **Settings → Pages → Source: GitHub Actions**. 3. The workflow `.github/workflows/pages.yml` builds and deploys on every push to `main` (or run it manually from the **Actions** tab). Pages on a private repo needs a paid GitHub plan; on a free plan the repo must be public. The site is reachable by anyone with the URL |
+| **Streamlit Community Cloud** (simplest hosted link) | The Streamlit app at `https://<name>.streamlit.app` | See [Deploy on Streamlit Community Cloud](#deploy-on-streamlit-community-cloud-live-link-for-the-team). Photos are processed on Streamlit's server in memory, not stored |
+| **Shared claude.ai link** | The same browser version (photo upload only, the camera is blocked inside that viewer) | Open the link → **Share** → add teammates |
+| **Full app on a server** | Logins, history, PDF reports, audit log | Deploy the `Dockerfile` to a cloud host (Cloud Run, Render, Azure, …). Admins add users under **Settings → Users**. Needs HTTPS for the camera and a privacy review before real biometric data is used |
+| **Full app on each laptop** | Everything, offline | Each person runs `scripts/setup.ps1` + `scripts/run.ps1` |
 
-There is **no combined "Health Score"**. See [docs/15_LIMITATIONS.md](docs/15_LIMITATIONS.md).
+GitHub itself only stores the code. It cannot run a Python server, so the Streamlit app needs Streamlit Cloud and the full app needs a server or each laptop.
+
+### Code layout
+
+```
+streamlit_app.py, healthvision/   Streamlit app and its service layer (config/healthvision.yaml, models/registry.yaml)
+backend/healthvision_server/      FastAPI app: api/, services/, engines/, storage/, reports/
+frontend/src/                     React + TypeScript UI for the FastAPI app
+web-demo/                         Browser-only single page (ONNX Runtime Web + MediaPipe)
+config/server.example.yaml        FastAPI app thresholds        models/server-registry.yaml  its model registry
+tools/                            fetch_models, benchmark, calibration and evaluation tools (FastAPI app)
+tests/                            test_*.py: Streamlit app · unit/ integration/ wording_lint/: FastAPI app
+```
 
 ## Start here
 
@@ -89,6 +166,7 @@ There is **no combined "Health Score"**. See [docs/15_LIMITATIONS.md](docs/15_LI
 | 14 | [Production Roadmap](docs/14_PRODUCTION_ROADMAP.md) | V1 milestones, V2, V3, readiness gate |
 | 15 | [Limitations](docs/15_LIMITATIONS.md) | Known limitations and "never do" list |
 | 16 | [Webinar Demo Plan](docs/16_WEBINAR_DEMO_PLAN.md) | 1–2 minute demo script and messaging |
+| 17 | [Implementation Notes](docs/17_IMPLEMENTATION_NOTES.md) | Build status and deviations from the plan |
 
 ## Note on the source brief
 
